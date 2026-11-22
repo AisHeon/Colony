@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // The Postgres/PGlite drivers are native-ish and must never be bundled for the browser.
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
+  // The serverless PGlite fallback needs its SQL and WASM assets in the bundle.
+  outputFileTracingIncludes: {
+    "/*": ["./db/*.sql", "./node_modules/@electric-sql/pglite/dist/**/*"],
+  },
   async headers() {
     return [
       {

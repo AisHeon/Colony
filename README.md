@@ -50,6 +50,7 @@ npm test                 # 29 rule tests (placement, sharing, validation, Spider
 npm run test:engine      # full engine smoke on a real PGlite database and simulated clock
 npm run content:verify   # counts, pools, duplicates, solvability, provenance
 npm run build            # production build
+npx tsx scripts/dump-seed.mts   # regenerate db/seed.sql after content changes
 ```
 
 `test:engine` plays real matches: Anthill settlement and fixed sharing, Hopper ties, Beehive timeouts and elimination, idempotent intents, late-answer rejection, host migration and rematch.
@@ -102,4 +103,4 @@ The repository is a standard Next.js 15 app.
    ```
 4. Deploy.
 
-Without `DATABASE_URL`, Vercel falls back to PGlite inside the serverless filesystem. Pages render, but rooms do not survive cold starts and are not shared between instances, so a real deployment needs Postgres.
+Without `DATABASE_URL`, Vercel falls back to PGlite in `/tmp`, seeded automatically from `db/seed.sql`. The site and a room work on a warm instance, but each instance has its own database, so rooms are not shared between instances and disappear on cold starts. That mode is for a look around; a real multiplayer deployment needs Postgres and `npm run db:migrate && npm run db:seed` once against it.

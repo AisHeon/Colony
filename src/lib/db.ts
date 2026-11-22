@@ -91,10 +91,12 @@ async function createDb(): Promise<Db> {
     return wrap(pool as unknown as PgPoolLike, "postgres");
   }
 
-  // Local/dev fallback. Data lives in ./.colony-data so restarts keep rooms.
+  // Embedded fallback. Local data lives in ./.colony-data; on a serverless
+  // host only /tmp is writable, so use a per-instance directory there.
   const { PGlite } = await import("@electric-sql/pglite");
-  const path = process.env.COLONY_PGLITE_PATH || ".colony-data";
-  const pglite = await PGlite.create({ dataDir: path });
+  const serverless = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  const dataDir = process.env.COLONY_PGLITE_PATH || (serverless ? "/tmp/colony-data" : ".colony-data");
+  const pglite = await PGlite.create({ dataDir });
 
   const query: QueryFn = async <T extends Row = Row>(sql: string, params: unknown[] = []) => {
     const res = await pglite.query<T>(sql, params as never[]);
@@ -123,27 +125,45 @@ async function createDb(): Promise<Db> {
   };
 
   await ensureSchema(db);
+  await ensureContent(db);
   return db;
 }
 
-/** Applies db/schema.sql. Idempotent; safe to call on every cold start. */
-async function ensureSchema(db: Db) {
+/** Reads a SQL file from the project's db/ directory (bundled on serverless). */
+async function readDbSql(name: string): Promise<string | null> {
   const fs = await import("node:fs/promises");
   const path = await import("node:path");
   const candidates = [
-    path.join(process.cwd(), "db", "schema.sql"),
-    path.join(process.cwd(), "..", "db", "schema.sql"),
+    path.join(process.cwd(), "db", name),
+    path.join(process.cwd(), "..", "db", name),
   ];
   for (const candidate of candidates) {
     try {
-      const sql = await fs.readFile(candidate, "utf8");
-      await db.exec(sql);
-      return;
+      return await fs.readFile(candidate, "utf8");
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
   }
-  throw new Error("db/schema.sql not found; run scripts/migrate.ts");
+  return null;
+}
+
+/** Applies db/schema.sql. Idempotent; safe to call on every cold start. */
+async function ensureSchema(db: Db) {
+  const sql = await readDbSql("schema.sql");
+  if (!sql) throw new Error("db/schema.sql not found; run scripts/migrate.ts");
+  await db.exec(sql);
+}
+
+/**
+ * Seeds the audited content once per PGlite instance. Hosted Postgres is
+ * seeded explicitly with `npm run db:seed` and is never auto-populated here.
+ */
+async function ensureContent(db: Db) {
+  const seeded = await db.one<{ key: string }>("select key from content_meta where key = 'version'");
+  if (seeded) return;
+  const sql = await readDbSql("seed.sql");
+  if (!sql) throw new Error("db/seed.sql not found; run npx tsx scripts/dump-seed.mts");
+  await db.exec(sql);
 }
 
 export function getDb(): Promise<Db> {

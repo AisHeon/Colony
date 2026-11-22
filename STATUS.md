@@ -71,7 +71,7 @@ Seed output: **1,423 entities · 121 aliases · 45 prompts · 2,260 answer links
 1. **Transport.** Vercel cannot host a long-lived Socket.IO server, so the authoritative state is delivered by adaptive polling (`/api/rooms/[code]/state`, roughly every 1.2 s in a live round, backing off when idle). The server still owns every deadline through a lazy logical clock. This is a deployment constraint, not a client-authoritative shortcut.
 2. **Hopper.** Ranks are editorial estimates, never survey results; the UI says so on every question.
 3. **Solar System pool.** The planet prompt has eight answers because the Solar System has eight planets. The verifier's floor is eight for this reason.
-4. **Database on Vercel.** The code supports `DATABASE_URL`, but no hosted Postgres is provisioned from this workspace. Without it the deployment falls back to an ephemeral PGlite filesystem, which is fine for a look around but not for a persistent room list.
+4. **Database on Vercel.** The code supports `DATABASE_URL`, but no hosted Postgres is provisioned from this workspace. Without it the deployment falls back to PGlite in `/tmp`, seeded from `db/seed.sql` on first use. A warm instance can create and play rooms, verified locally; instances do not share rooms and cold starts reset them. Attach Postgres for persistent, cross-device multiplayer.
 
 ## Not implemented
 
