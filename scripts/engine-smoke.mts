@@ -10,7 +10,7 @@
 import assert from "node:assert/strict";
 import { getDb } from "../src/lib/db";
 import { createRoom, joinRoom, startMatch } from "../src/lib/game/engine";
-import { advanceRoom } from "../src/lib/game/engine";
+import { advanceRoom, touchPresence } from "../src/lib/game/engine";
 import { applyIntent } from "../src/lib/game/intents";
 import { buildSnapshotForRoom } from "../src/lib/game/snapshot";
 import { hashToken, newId, newToken } from "../src/lib/ids";
@@ -330,18 +330,27 @@ console.log("\n[4] Host migration and rematch reset");
   await applyIntent(db, room.code, b, { type: "room:ready", ready: true }, rid(), T);
   await applyIntent(db, room.code, a, { type: "room:ready", ready: true }, rid(), T);
 
-  // The host has been gone for a minute; Bo is present and takes over.
   const memberB = await db.one<{ id: string }>(
     "select id from room_member where nickname = 'Bo' and room_id = (select id from room where code = $1)",
     [room.code],
   );
-  await db.query("update room_member set last_seen_at = $2 where id = $1", [member.id, T - 60_000]);
+
+  // A polling host is present even when they have not sent an intent recently.
+  await touchPresence(db, room.code, a, T + 9_000);
   await db.query("update room_member set last_seen_at = $2 where id = $1", [memberB!.id, T + 11_000]);
-  await advanceRoom(db, room.code, T + 12_000);
-  const updated = await db.one<{ host_member_id: string }>("select host_member_id from room where code = $1", [
+  await advanceRoom(db, room.code, T + 11_500);
+  let hostRow = await db.one<{ host_member_id: string }>("select host_member_id from room where code = $1", [
     room.code,
   ]);
-  assert.equal(updated?.host_member_id, memberB!.id, "host transferred to the longest-present connected member");
+  assert.equal(hostRow?.host_member_id, member.id, "presence polling keeps an attentive host");
+
+  // Once the host really is gone, the present player takes over.
+  await db.query("update room_member set last_seen_at = $2 where id = $1", [member.id, T - 60_000]);
+  await advanceRoom(db, room.code, T + 12_000);
+  hostRow = await db.one<{ host_member_id: string }>("select host_member_id from room where code = $1", [
+    room.code,
+  ]);
+  assert.equal(hostRow?.host_member_id, memberB!.id, "host transferred to the longest-present connected member");
 
   // The old host comes back online, so the room has two connected players again.
   await db.query("update room_member set last_seen_at = $2 where id = $1", [member.id, T + 12_000]);

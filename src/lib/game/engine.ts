@@ -410,6 +410,16 @@ export async function touchMember(q: QueryFn, memberId: string, now: number) {
   await q("update room_member set last_seen_at = $2 where id = $1", [memberId, now]);
 }
 
+/** A state poll is a presence heartbeat, throttled so reads do not churn state. */
+export async function touchPresence(db: Db, code: string, guestId: string, now = Date.now()) {
+  await db.query(
+    `update room_member set last_seen_at = $2::double precision
+      where room_id = (select id from room where code = $1)
+        and guest_id = $3 and left_at is null and last_seen_at < $2::double precision - 4000`,
+    [code, now, guestId],
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Match lifecycle
 // ---------------------------------------------------------------------------
