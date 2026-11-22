@@ -1,0 +1,111 @@
+{
+  "label": "07-start",
+  "status": 200,
+  "vercelId": "sfo1::iad1::v6ldt-1795322295407-9718dde8a397",
+  "body": {
+    "result": {
+      "ok": true,
+      "code": "OK",
+      "message": "Match started — 1 round.",
+      "tone": "ok"
+    },
+    "snapshot": {
+      "protocol": 1,
+      "serverTime": 1795322295991,
+      "contentVersion": "2026.11.1",
+      "version": 5,
+      "room": {
+        "code": "EEPJ54",
+        "status": "playing",
+        "settings": {
+          "mode": "hopper",
+          "packs": [
+            "core"
+          ],
+          "rounds": 1,
+          "maxPlayers": 20,
+          "hopperSeconds": 20,
+          "spiderSeconds": 90,
+          "familyFriendly": true
+        },
+        "settingsVersion": 1,
+        "hostMemberId": "mem_1I4OAOqry_5Gb2VF"
+      },
+      "you": {
+        "memberId": "mem_1I4OAOqry_5Gb2VF",
+        "nickname": "Ada",
+        "isHost": true,
+        "spectator": false,
+        "ready": false
+      },
+      "members": [
+        {
+          "id": "mem_1I4OAOqry_5Gb2VF",
+          "nickname": "Ada",
+          "avatar": 5,
+          "isHost": true,
+          "ready": false,
+          "connected": true,
+          "spectator": false,
+          "left": false
+        },
+        {
+          "id": "mem_xbigDzAwEYb0TyWc",
+          "nickname": "Bo",
+          "avatar": 3,
+          "isHost": false,
+          "ready": false,
+          "connected": true,
+          "spectator": false,
+          "left": false
+        }
+      ],
+      "match": {
+        "id": "mtc_Hh39TBaMnjCQ_7cG",
+        "mode": "hopper",
+        "status": "active",
+        "playlist": [],
+        "roundIndex": 1,
+        "roundCount": 1,
+        "startedAt": 1795322295581,
+        "points": {},
+        "roundSummaries": [
+          {
+            "index": 1,
+            "mode": "hopper",
+            "finalizedAt": null,
+            "placements": []
+          }
+        ],
+        "vote": null
+      },
+      "round": {
+        "id": "rnd__JMQoiuzXgjcyMor",
+        "index": 1,
+        "total": 1,
+        "mode": "hopper",
+        "phase": "countdown",
+        "startsAt": 1795322295581,
+        "endsAt": 1795322318581,
+        "resultsAt": null,
+        "countdownEndsAt": 1795322298581,
+        "prompt": {
+          "text": "Name something people do at a wedding.",
+          "scope": "Common activities at a wedding reception or ceremony."
+        },
+        "results": null,
+        "hopper": {
+          "question": "Name something people do at a wedding.",
+          "scope": "Common activities at a wedding reception or ceremony.",
+          "sourceKind": "editorial_estimate",
+          "sourceLabel": "Estimated popular answers",
+          "savedCount": 0,
+          "mySaved": null,
+          "reveal": null
+        }
+      },
+      "feedback": null,
+      "serverIssues": []
+    }
+  }
+}

@@ -1,16 +1,16 @@
 {
   "label": "01-create",
   "status": 200,
-  "vercelId": "sfo1::iad1::qm2gv-1795321697720-289aa97375dd",
+  "vercelId": "sfo1::iad1::qn5pj-1795322286363-a7d9d33335c7",
   "body": {
-    "roomCode": "C4PC3N",
+    "roomCode": "EEPJ54",
     "snapshot": {
       "protocol": 1,
-      "serverTime": 1795321698195,
+      "serverTime": 1795322287025,
       "contentVersion": "2026.11.1",
       "version": 1,
       "room": {
-        "code": "C4PC3N",
+        "code": "EEPJ54",
         "status": "lobby",
         "settings": {
           "mode": "hopper",
@@ -24,10 +24,10 @@
           "familyFriendly": true
         },
         "settingsVersion": 1,
-        "hostMemberId": "mem_k9sfx0RNqeaSNkfV"
+        "hostMemberId": "mem_1I4OAOqry_5Gb2VF"
       },
       "you": {
-        "memberId": "mem_k9sfx0RNqeaSNkfV",
+        "memberId": "mem_1I4OAOqry_5Gb2VF",
         "nickname": "Ada",
         "isHost": true,
         "spectator": false,
@@ -35,9 +35,9 @@
       },
       "members": [
         {
-          "id": "mem_k9sfx0RNqeaSNkfV",
+          "id": "mem_1I4OAOqry_5Gb2VF",
           "nickname": "Ada",
-          "avatar": 6,
+          "avatar": 5,
           "isHost": true,
           "ready": true,
           "connected": true,

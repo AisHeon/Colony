@@ -1,0 +1,119 @@
+{
+  "label": "10-answer-guest",
+  "status": 200,
+  "vercelId": "sfo1::iad1::dksrg-1795322301563-b24f2091a041",
+  "body": {
+    "result": {
+      "ok": true,
+      "code": "ACCEPTED_EXACT",
+      "message": "Saved: Dance. You can change it before time runs out.",
+      "tone": "ok"
+    },
+    "snapshot": {
+      "protocol": 1,
+      "serverTime": 1795322302247,
+      "contentVersion": "2026.11.1",
+      "version": 8,
+      "room": {
+        "code": "EEPJ54",
+        "status": "playing",
+        "settings": {
+          "mode": "hopper",
+          "packs": [
+            "core"
+          ],
+          "rounds": 1,
+          "maxPlayers": 20,
+          "hopperSeconds": 20,
+          "spiderSeconds": 90,
+          "familyFriendly": true
+        },
+        "settingsVersion": 1,
+        "hostMemberId": "mem_1I4OAOqry_5Gb2VF"
+      },
+      "you": {
+        "memberId": "mem_xbigDzAwEYb0TyWc",
+        "nickname": "Bo",
+        "isHost": false,
+        "spectator": false,
+        "ready": false
+      },
+      "members": [
+        {
+          "id": "mem_1I4OAOqry_5Gb2VF",
+          "nickname": "Ada",
+          "avatar": 5,
+          "isHost": true,
+          "ready": false,
+          "connected": true,
+          "spectator": false,
+          "left": false
+        },
+        {
+          "id": "mem_xbigDzAwEYb0TyWc",
+          "nickname": "Bo",
+          "avatar": 3,
+          "isHost": false,
+          "ready": false,
+          "connected": true,
+          "spectator": false,
+          "left": false
+        }
+      ],
+      "match": {
+        "id": "mtc_Hh39TBaMnjCQ_7cG",
+        "mode": "hopper",
+        "status": "active",
+        "playlist": [],
+        "roundIndex": 1,
+        "roundCount": 1,
+        "startedAt": 1795322295581,
+        "points": {},
+        "roundSummaries": [
+          {
+            "index": 1,
+            "mode": "hopper",
+            "finalizedAt": null,
+            "placements": []
+          }
+        ],
+        "vote": null
+      },
+      "round": {
+        "id": "rnd__JMQoiuzXgjcyMor",
+        "index": 1,
+        "total": 1,
+        "mode": "hopper",
+        "phase": "active",
+        "startsAt": 1795322295581,
+        "endsAt": 1795322318581,
+        "resultsAt": null,
+        "countdownEndsAt": 1795322298581,
+        "prompt": {
+          "text": "Name something people do at a wedding.",
+          "scope": "Common activities at a wedding reception or ceremony."
+        },
+        "results": null,
+        "hopper": {
+          "question": "Name something people do at a wedding.",
+          "scope": "Common activities at a wedding reception or ceremony.",
+          "sourceKind": "editorial_estimate",
+          "sourceLabel": "Estimated popular answers",
+          "savedCount": 2,
+          "mySaved": {
+            "bucketId": "hopper.wedding.b1",
+            "text": "Dance"
+          },
+          "reveal": null
+        }
+      },
+      "feedback": {
+        "code": "ACCEPTED_EXACT",
+        "message": "Saved: Dance. You can change it before time runs out.",
+        "tone": "ok",
+        "at": 1795322301812
+      },
+      "serverIssues": []
+    }
+  }
+}

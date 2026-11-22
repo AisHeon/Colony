@@ -1,0 +1,285 @@
+{
+  "label": "11-results",
+  "status": 200,
+  "vercelId": "sfo1::iad1::jcz98-1795322324435-456bd64953c0",
+  "body": {
+    "snapshot": {
+      "protocol": 1,
+      "serverTime": 1795322324751,
+      "contentVersion": "2026.11.1",
+      "version": 10,
+      "room": {
+        "code": "EEPJ54",
+        "status": "ended",
+        "settings": {
+          "mode": "hopper",
+          "packs": [
+            "core"
+          ],
+          "rounds": 1,
+          "maxPlayers": 20,
+          "hopperSeconds": 20,
+          "spiderSeconds": 90,
+          "familyFriendly": true
+        },
+        "settingsVersion": 1,
+        "hostMemberId": "mem_1I4OAOqry_5Gb2VF"
+      },
+      "you": {
+        "memberId": "mem_xbigDzAwEYb0TyWc",
+        "nickname": "Bo",
+        "isHost": false,
+        "spectator": false,
+        "ready": false
+      },
+      "members": [
+        {
+          "id": "mem_1I4OAOqry_5Gb2VF",
+          "nickname": "Ada",
+          "avatar": 5,
+          "isHost": true,
+          "ready": false,
+          "connected": false,
+          "spectator": false,
+          "left": false
+        },
+        {
+          "id": "mem_xbigDzAwEYb0TyWc",
+          "nickname": "Bo",
+          "avatar": 3,
+          "isHost": false,
+          "ready": false,
+          "connected": false,
+          "spectator": false,
+          "left": false
+        }
+      ],
+      "match": {
+        "id": "mtc_Hh39TBaMnjCQ_7cG",
+        "mode": "hopper",
+        "status": "ended",
+        "playlist": [],
+        "roundIndex": 1,
+        "roundCount": 1,
+        "startedAt": 1795322295581,
+        "points": {
+          "mem_1I4OAOqry_5Gb2VF": 900,
+          "mem_xbigDzAwEYb0TyWc": 900
+        },
+        "roundSummaries": [
+          {
+            "index": 1,
+            "mode": "hopper",
+            "finalizedAt": 1795322324492,
+            "placements": [
+              {
+                "memberId": "mem_1I4OAOqry_5Gb2VF",
+                "placement": 1,
+                "matchPoints": 900
+              },
+              {
+                "memberId": "mem_xbigDzAwEYb0TyWc",
+                "placement": 1,
+                "matchPoints": 900
+              }
+            ]
+          }
+        ],
+        "vote": null
+      },
+      "round": {
+        "id": "rnd__JMQoiuzXgjcyMor",
+        "index": 1,
+        "total": 1,
+        "mode": "hopper",
+        "phase": "results",
+        "startsAt": 1795322295581,
+        "endsAt": 1795322318581,
+        "resultsAt": 1795322332492,
+        "countdownEndsAt": 1795322298581,
+        "prompt": {
+          "text": "Name something people do at a wedding.",
+          "scope": "Common activities at a wedding reception or ceremony."
+        },
+        "results": {
+          "mode": "hopper",
+          "placements": [
+            {
+              "memberId": "mem_1I4OAOqry_5Gb2VF",
+              "placement": 1,
+              "matchPoints": 900,
+              "performance": {
+                "rank": 1,
+                "score": 1000,
+                "answer": "Dance",
+                "bucketId": "hopper.wedding.b1"
+              }
+            },
+            {
+              "memberId": "mem_xbigDzAwEYb0TyWc",
+              "placement": 1,
+              "matchPoints": 900,
+              "performance": {
+                "rank": 1,
+                "score": 1000,
+                "answer": "Dance",
+                "bucketId": "hopper.wedding.b1"
+              }
+            }
+          ],
+          "podium": [
+            {
+              "memberId": "mem_1I4OAOqry_5Gb2VF",
+              "placement": 1,
+              "matchPoints": 900,
+              "detail": "Dance · rank 1"
+            },
+            {
+              "memberId": "mem_xbigDzAwEYb0TyWc",
+              "placement": 1,
+              "matchPoints": 900,
+              "detail": "Dance · rank 1"
+            }
+          ],
+          "reveal": {
+            "ranking": [
+              {
+                "rank": 1,
+                "canonical": "Dance",
+                "score": 1000,
+                "players": [
+                  "Ada",
+                  "Bo"
+                ]
+              },
+              {
+                "rank": 2,
+                "canonical": "Eat",
+                "score": 750,
+                "players": []
+              },
+              {
+                "rank": 3,
+                "canonical": "Toast",
+                "score": 500,
+                "players": []
+              },
+              {
+                "rank": 4,
+                "canonical": "Cry",
+                "score": 300,
+                "players": []
+              },
+              {
+                "rank": 5,
+                "canonical": "Throw bouquet",
+                "score": 150,
+                "players": []
+              },
+              {
+                "rank": 6,
+                "canonical": "Take photos",
+                "score": 50,
+                "players": []
+              },
+              {
+                "rank": 7,
+                "canonical": "Give a speech",
+                "score": 50,
+                "players": []
+              }
+            ],
+            "answers": [
+              {
+                "memberId": "mem_1I4OAOqry_5Gb2VF",
+                "nickname": "Ada",
+                "canonical": "Dance",
+                "rank": 1
+              },
+              {
+                "memberId": "mem_xbigDzAwEYb0TyWc",
+                "nickname": "Bo",
+                "canonical": "Dance",
+                "rank": 1
+              }
+            ],
+            "sourceLabel": "Estimated popular answers",
+            "sourceNote": "Editorially reviewed expected ranking. Not a survey result."
+          },
+          "nextAt": 1795322332492,
+          "canAdvance": false
+        },
+        "hopper": {
+          "question": "Name something people do at a wedding.",
+          "scope": "Common activities at a wedding reception or ceremony.",
+          "sourceKind": "editorial_estimate",
+          "sourceLabel": "Estimated popular answers",
+          "savedCount": 2,
+          "mySaved": {
+            "bucketId": "hopper.wedding.b1",
+            "text": "Dance"
+          },
+          "reveal": {
+            "ranking": [
+              {
+                "rank": 1,
+                "canonical": "Dance",
+                "score": 1000,
+                "players": [
+                  "Ada",
+                  "Bo"
+                ]
+              },
+              {
+                "rank": 2,
+                "canonical": "Eat",
+                "score": 750,
+                "players": []
+              },
+              {
+                "rank": 3,
+                "canonical": "Toast",
+                "score": 500,
+                "players": []
+              },
+              {
+                "rank": 4,
+                "canonical": "Cry",
+                "score": 300,
+                "players": []
+              },
+              {
+                "rank": 5,
+                "canonical": "Throw bouquet",
+                "score": 150,
+                "players": []
+              },
+              {
+                "rank": 6,
+                "canonical": "Take photos",
+                "score": 50,
+                "players": []
+              },
+              {
+                "rank": 7,
+                "canonical": "Give a speech",
+                "score": 50,
+                "players": []
+              }
+            ],
+            "sourceLabel": "Estimated popular answers",
+            "sourceNote": "Editorially reviewed expected ranking. Not a survey result.",
+            "myScore": 1000
+          }
+        }
+      },
+      "feedback": {
+        "code": "ACCEPTED_EXACT",
+        "message": "Saved: Dance. You can change it before time runs out.",
+        "tone": "ok",
+        "at": 1795322301812
+      },
+      "serverIssues": []
+    }
+  }
+}

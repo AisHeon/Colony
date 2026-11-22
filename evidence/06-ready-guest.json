@@ -1,0 +1,69 @@
+{
+  "label": "06-ready-guest",
+  "status": 200,
+  "vercelId": "sfo1::iad1::2c725-1795322294507-2adbdb088bdb",
+  "body": {
+    "result": {
+      "ok": true,
+      "code": "OK",
+      "message": "You're ready.",
+      "tone": "ok"
+    },
+    "snapshot": {
+      "protocol": 1,
+      "serverTime": 1795322295327,
+      "contentVersion": "2026.11.1",
+      "version": 3,
+      "room": {
+        "code": "EEPJ54",
+        "status": "lobby",
+        "settings": {
+          "mode": "hopper",
+          "packs": [
+            "core"
+          ],
+          "rounds": 1,
+          "maxPlayers": 20,
+          "hopperSeconds": 20,
+          "spiderSeconds": 90,
+          "familyFriendly": true
+        },
+        "settingsVersion": 1,
+        "hostMemberId": "mem_1I4OAOqry_5Gb2VF"
+      },
+      "you": {
+        "memberId": "mem_xbigDzAwEYb0TyWc",
+        "nickname": "Bo",
+        "isHost": false,
+        "spectator": false,
+        "ready": true
+      },
+      "members": [
+        {
+          "id": "mem_1I4OAOqry_5Gb2VF",
+          "nickname": "Ada",
+          "avatar": 5,
+          "isHost": true,
+          "ready": true,
+          "connected": true,
+          "spectator": false,
+          "left": false
+        },
+        {
+          "id": "mem_xbigDzAwEYb0TyWc",
+          "nickname": "Bo",
+          "avatar": 3,
+          "isHost": false,
+          "ready": true,
+          "connected": true,
+          "spectator": false,
+          "left": false
+        }
+      ],
+      "match": null,
+      "round": null,
+      "feedback": null,
+      "serverIssues": []
+    }
+  }
+}
