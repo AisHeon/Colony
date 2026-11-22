@@ -84,11 +84,13 @@ scripts/                 migrate, seed, verify, import, engine smoke
 
 ## Design
 
-The visual language is original: off-white paper, deep green ink, six flat creature marks drawn as inline SVG, generous type, and a single accent per mode. There are no external fonts, images or trackers. Motion respects `prefers-reduced-motion`, every control is keyboard reachable, and all interactive targets are at least 44 px.
+The visual language is a printed game zine: warm paper stock with a fine dot grid, black ink rules, hard offset shadows, a serif display face, mono labels, six flat creature marks drawn as inline SVG, and one accent per mode. The hero uses an original insect-table illustration exported from Canva and served locally from `public/art/`. There are no external fonts, remote images or trackers. Motion respects `prefers-reduced-motion`, every control is keyboard reachable, and all interactive targets are at least 44 px.
 
 ## Content
 
-- 40 Anthill prompts, 5 Beehive pools (all ≥100 answers), 25 Hopper questions with 175 ranked buckets, 27 Spider puzzles over 63 sourced graph edges.
+- 3,266 entities and 5,206 accepted answer links across 60 Anthill prompts and 9 Beehive pools (all ≥100 answers).
+- 50 Hopper questions with 675 ranked buckets and at least 12 buckets each, plus 27 Spider puzzles over 63 sourced graph edges.
+- Deep niche coverage: 292 Pokémon, 250 animals, 192 countries and capitals, 175 instruments, 167 dog breeds, 128 Minecraft items, 80 dinosaurs, 62 flowers, 60 trees, 50 gemstones, 49 Greek figures, 41 game consoles and more.
 - All answer text is original editorial content. Spider edges carry a `source` column and are checked for reachability at seed time.
 - Hopper is explicitly labelled **Estimated popular answers** in the UI; it is not survey data and the app never claims otherwise.
 

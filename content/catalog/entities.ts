@@ -4,6 +4,9 @@
  * Attributes drive prompt selectors (e.g. ptype=electric, starter=1).
  */
 
+import { GENERAL_ENTITY_SEEDS } from "./answers-general";
+import { NICHE_ENTITY_SEEDS } from "./answers-niche";
+
 export type EntitySeed = {
   id: string;
   name: string;
@@ -1357,6 +1360,8 @@ export const ENTITY_SEEDS: EntitySeed[] = [
   ...HP_CHARACTERS,
   ...SW_CHARACTERS,
   ...CITIES,
+  ...GENERAL_ENTITY_SEEDS,
+  ...NICHE_ENTITY_SEEDS,
 ];
 
 export { parse as parseEntityBlock, slug as entitySlug };

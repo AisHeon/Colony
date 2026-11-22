@@ -17,14 +17,16 @@ Content is code: typed modules under `content/catalog/`, loaded by `scripts/seed
 `npm run content:verify` prints and checks these (current seed):
 
 ```
-entities 1,423   aliases 121   prompts 45   answer links 2,260
-Anthill 40 prompts / 1,621 answers
-Beehive 5 pools / 639 answers (every pool ≥ 100)
-Hopper 25 questions / 175 ranked buckets
+entities 3,266   aliases 273   prompts 69   answer links 5,206
+Anthill 60 prompts / 3,751 answers
+Beehive 9 pools / 1,455 answers (every pool ≥ 100)
+Hopper 50 questions / 675 ranked buckets (every question ≥ 12)
 Spider 63 sourced edges / 27 puzzles
 ```
 
-Checks include: every Anthill prompt has at least eight answers (the Solar System prompt is complete at eight planets), every Beehive pool has at least 100, every Hopper question at least five ranked buckets, no canonical name repeats inside a prompt, no alias maps to two entities, every prompt answer points at a real entity, every Spider puzzle is reachable in the permitted direction, and every graph edge records its source.
+The roster deliberately goes past the obvious. It includes 292 Pokémon species, 250 animals, 192 countries with capitals, 175 instruments, 167 dog breeds, 128 Minecraft items, 80 dinosaurs, 62 flowers, 60 trees, 50 gemstones, 49 Greek figures, 41 game consoles, 41 bones, 42 moons, 41 volcanoes, 52 rivers and 67 currencies, alongside cities, sports, candy, Disney, Harry Potter, Star Wars, Shakespeare and programming languages.
+
+Checks include: at least 5,000 accepted answer links overall, every Anthill prompt has at least eight answers (the Solar System prompt is complete at eight planets), every Beehive pool has at least 100, every Hopper question at least twelve ranked buckets, no canonical name repeats inside a prompt, no alias maps to two entities, every prompt answer points at a real entity, every Spider puzzle is reachable in the permitted direction, and every graph edge records its source.
 
 ## Answer validation
 

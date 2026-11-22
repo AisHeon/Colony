@@ -84,10 +84,10 @@ export function Wordmark({ size = 26 }: { size?: number }) {
   return (
     <span className="wordmark">
       <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-        <rect width="32" height="32" rx="8" fill="#2F6B4F" />
+        <rect width="32" height="32" rx="2" fill="#191711" />
         <g
           fill="none"
-          stroke="#F7F7F2"
+          stroke="#F1EAD8"
           strokeWidth="1.7"
           strokeLinecap="round"
           strokeLinejoin="round"

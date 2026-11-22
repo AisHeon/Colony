@@ -13,7 +13,7 @@ Last verified: 22 November 2026. Every number below was produced by running the 
 | Content audit | `npm run content:verify` | all checks pass |
 | Production build | `npm run build` | 9 static pages + 8 API/room routes |
 
-Seed output: **1,423 entities · 121 aliases · 45 prompts · 2,260 answer links · 25 Hopper questions · 175 Hopper buckets · 63 sourced graph edges · 27 Spider puzzles.** Anthill 40 prompts; Beehive 5 pools of 118–143 answers each.
+Seed output: **3,266 entities · 273 aliases · 69 prompts · 5,206 answer links · 50 Hopper questions · 675 Hopper buckets · 63 sourced graph edges · 27 Spider puzzles.** Anthill 60 prompts; Beehive 9 pools, every one above 100 answers.
 
 ## Spec coverage
 
@@ -45,9 +45,9 @@ Seed output: **1,423 entities · 121 aliases · 45 prompts · 2,260 answer links
 
 ### Content
 
-- [x] 40 Anthill prompts (≥8 answers each; most far more).
-- [x] 5 Beehive pools, all ≥100 answers.
-- [x] 25 Hopper questions with 5+ ranked buckets each and honest labelling.
+- [x] 60 Anthill prompts (≥8 answers each; most far more), including deep dinosaur, Greek myth, flower, tree, gemstone, console, Shakespeare, bone, moon, volcano, river, mountain, sea and currency pools.
+- [x] 9 Beehive pools, all ≥100 answers.
+- [x] 50 Hopper questions with 12+ ranked buckets each and honest labelling.
 - [x] 27 Spider puzzles on 63 sourced edges; every puzzle reachability-checked at seed time.
 - [x] Alias resolution plus conservative Damerau–Levenshtein distance-1 correction.
 - [x] Specific wrong-type messages rather than a generic “no”.
@@ -62,9 +62,9 @@ Seed output: **1,423 entities · 121 aliases · 45 prompts · 2,260 answer links
 
 ### Interface
 
-- [x] Off-white/deep-green design system, one accent per mode, original inline SVG creatures.
+- [x] Printed game-zine design: warm paper and dot grid, ink rules, hard offset shadows, serif display type, mono labels, one accent per mode, original inline SVG creatures, and local Canva key art.
 - [x] Mobile-first layout, 44 px targets, visible focus, keyboard operation, live regions for errors.
-- [x] `prefers-reduced-motion` honoured; no external fonts, images or trackers.
+- [x] `prefers-reduced-motion` honoured; no external fonts or remote images, one local illustration, no trackers.
 - [x] How-to-play, privacy and not-found pages.
 
 ## Deliberate deviations

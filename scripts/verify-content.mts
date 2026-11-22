@@ -50,10 +50,11 @@ for (const row of byKind) {
 }
 
 const anthill = byKind.find((row) => row.kind === "anthill");
-check(!!anthill && Number(anthill.prompts) >= 40, "at least 40 Anthill prompts");
+check(Number(totals!.answers) >= 5000, "at least 5,000 accepted answer links");
+check(!!anthill && Number(anthill.prompts) >= 60, "at least 60 Anthill prompts");
 
 const beehive = byKind.find((row) => row.kind === "beehive");
-check(!!beehive && Number(beehive.prompts) >= 5, "at least 5 Beehive categories");
+check(!!beehive && Number(beehive.prompts) >= 9, "at least 9 Beehive categories");
 
 const thinPools = await db.query<{ id: string; answers: number }>(
   `select p.id, count(pa.entity_id) as answers
@@ -79,10 +80,11 @@ check(anthillThin.length === 0, "every Anthill prompt has at least 8 answers");
 const hopperThin = await db.query<{ id: string; buckets: number }>(
   `select q.id, count(b.id) as buckets
      from hopper_question q left join hopper_bucket b on b.question_id = q.id
-    group by q.id having count(b.id) < 5 order by buckets`,
+    group by q.id having count(b.id) < 12 order by buckets`,
 );
-check(hopperThin.length === 0, "every Hopper question has at least 5 ranked buckets");
-check(Number(totals!.hopper) >= 25, "at least 25 Hopper questions");
+check(hopperThin.length === 0, "every Hopper question has at least 12 ranked buckets");
+check(Number(totals!.hopper) >= 50, "at least 50 Hopper questions");
+check(Number(totals!.buckets) >= 600, "at least 600 Hopper buckets");
 
 const duplicateAnswers = await db.query<{ prompt_id: string; name: string; n: number }>(
   `select pa.prompt_id, lower(e.canonical_name) as name, count(*) as n

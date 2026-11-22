@@ -21,29 +21,44 @@ export default function HomePage() {
 
       <main>
         <section className="hero">
-          <div className="stack">
-            <p className="eyebrow">A tiny-creature party game</p>
-            <h1>Quick answers. Clever connections. One room.</h1>
+          <div className="stack hero-copy">
+            <p className="eyebrow">A five-game party in one room</p>
+            <h1>
+              Quick answers. <span className="scribble">Clever connections.</span>{" "}
+              <br />
+              One room.
+            </h1>
             <p className="lede">
-              Five fast minigames for friends on phones or laptops. No accounts, no downloads — share
-              a six-character code and play.
+              Five fast games for a loud table. Share a six-character code and everyone plays on
+              their own phone. No accounts, no downloads, no explaining what an app store is.
             </p>
-            <div className="row small muted">
-              <span className="badge badge-outline">2–20 players</span>
-              <span className="badge badge-outline">Private rooms</span>
-              <span className="badge badge-outline">Guests welcome</span>
+            <div className="hero-stamps row small">
+              <span className="stamp">2–20 players</span>
+              <span className="stamp">one shared code</span>
+              <span className="stamp">phones, not consoles</span>
             </div>
           </div>
-          <HomeEntry />
+          <figure className="hero-poster">
+            <img
+              src="/art/colony-key-art.jpg"
+              alt="Four insect friends playing cards around a small green table"
+              width={1024}
+              height={1024}
+            />
+            <figcaption>Four friends. One table. Zero downloads.</figcaption>
+          </figure>
+          <div className="hero-side">
+            <HomeEntry />
+          </div>
         </section>
 
-        <section className="stack" style={{ marginTop: 36 }}>
-          <div className="spread">
-            <h2>The colony</h2>
-            <p className="small muted">Pick one, or let Party shuffle all four.</p>
+        <section className="stack" style={{ marginTop: 48 }}>
+          <div className="spread section-head">
+            <h2>Five ways to run the table.</h2>
+            <p className="small muted">Pick a lane, or let Party deal the whole hand.</p>
           </div>
           <div className="mode-grid">
-            {MODE_ORDER.map((id) => {
+            {MODE_ORDER.map((id, index) => {
               const mode = MODES[id];
               return (
                 <article
@@ -51,6 +66,7 @@ export default function HomePage() {
                   className="mode-card"
                   style={{ ["--mode-accent" as string]: `var(--accent-${id})` }}
                 >
+                  <span className="mode-num">{String(index + 1).padStart(2, "0")}</span>
                   <span className="mode-icon">
                     <ModeMark mode={id} size={22} />
                   </span>
@@ -65,8 +81,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="stack" style={{ marginTop: 44 }}>
-          <h2>How a round works</h2>
+        <section className="stack" style={{ marginTop: 52 }}>
+          <h2>How it goes.</h2>
           <div className="steps">
             <div className="card card-tight stack-sm">
               <span className="step-num">01</span>

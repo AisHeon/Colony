@@ -105,6 +105,10 @@ export function HomeEntry() {
 
   return (
     <div className="card entry-card">
+      <div className="entry-head">
+        <span className="ticket-kicker">Create or join</span>
+        <span className="ticket-mark">no account</span>
+      </div>
       <div className="entry-tabs" role="tablist" aria-label="Create or join">
         <button
           type="button"

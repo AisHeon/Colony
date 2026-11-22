@@ -5,7 +5,7 @@
 
 export const GAME_TITLE = "Colony";
 export const GAME_TAGLINE = "Quick answers. Clever connections. One room.";
-export const CONTENT_VERSION = "2026.11.1";
+export const CONTENT_VERSION = "2026.11.2";
 export const PROTOCOL_VERSION = 1;
 
 export type ModeId = "party" | "anthill" | "beehive" | "spider" | "hopper";
