@@ -11,7 +11,7 @@
 import assert from "node:assert/strict";
 import { createSharedDb } from "../src/lib/db";
 import { MemoryStateStore } from "../src/lib/state-store";
-import { createRoom, joinRoom, startMatch, advanceRoom } from "../src/lib/game/engine";
+import { createRoom, joinRoom, startMatch, advanceRoom, touchPresence } from "../src/lib/game/engine";
 import { applyIntent } from "../src/lib/game/intents";
 import { buildSnapshotForRoom } from "../src/lib/game/snapshot";
 import { hashToken, newId, newToken } from "../src/lib/ids";
@@ -127,5 +127,14 @@ const db4 = await createSharedDb(store);
 const from4 = await buildSnapshotForRoom(db4, room, a, T + 45_200);
 assert.equal(from4.round?.phase, "results");
 assert.equal(from4.members.length, 3);
+
+console.log("[shared] presence heartbeats commit to the shared document");
+await touchPresence(db2, room.code, a, T + 60_000);
+const persistedPresence = await store.read();
+const persistedHost = persistedPresence?.state.tables.room_member?.rows.find((row) => row.id === member.id);
+assert.equal(Number(persistedHost?.last_seen_at), T + 60_000, "presence write reached the shared store");
+const db5 = await createSharedDb(store);
+const present = await buildSnapshotForRoom(db5, room, a, T + 60_100);
+assert.equal(present.members.find((row) => row.nickname === "Ada")?.connected, true, "another instance sees the heartbeat");
 console.log("[shared] all cross-instance checks passed.");
 process.exit(0);
