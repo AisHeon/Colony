@@ -1879,6 +1879,20 @@ p {
 }
 
 @media (max-width: 640px) {
+  .game-bar-inner {
+    row-gap: 6px;
+  }
+  .game .spread,
+  .game .row-tight,
+  .game .member {
+    flex-wrap: wrap;
+  }
+  .game .spread > .row-tight {
+    justify-content: flex-start !important;
+  }
+  .game .room-code {
+    letter-spacing: 0.1em;
+  }
   .hero {
     padding-top: 28px;
   }
