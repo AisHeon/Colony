@@ -136,10 +136,21 @@ export class BlobStateStore implements StateStore {
 
   async read(): Promise<StoredState | null> {
     const { get } = await import("@vercel/blob");
-    const result = await get(STATE_PATH, { access: "private", useCache: false });
-    if (!result || result.statusCode !== 200) return null;
-    const text = await new Response(result.stream).text();
-    return { state: JSON.parse(text) as SharedState, etag: result.blob.etag };
+    // `head` returns the metadata ETag that `ifMatch` expects. The ETag header
+    // on the body download is not guaranteed to be the same representation.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const meta = await this.head();
+      if (!meta) return null;
+      const result = await get(STATE_PATH, { access: "private", useCache: false });
+      if (!result || result.statusCode !== 200) continue;
+      const text = await new Response(result.stream).text();
+      if (etagKey(result.blob.etag) !== etagKey(meta.etag)) {
+        // A write landed between metadata and body; read both again.
+        continue;
+      }
+      return { state: JSON.parse(text) as SharedState, etag: meta.etag };
+    }
+    throw new Error("Shared state changed while it was being read; retry the request.");
   }
 
   async write(state: SharedState, etag: string | null): Promise<string> {
@@ -190,6 +201,11 @@ export class MemoryStateStore implements StateStore {
     this.stored = { state: structuredClone(state), etag: next };
     return next;
   }
+}
+
+/** Compares ETags from the metadata API and the download endpoint. */
+function etagKey(value: string): string {
+  return value.replace(/^W\//i, "").replace(/^"/, "").replace(/"$/, "");
 }
 
 function isNotFound(error: unknown): boolean {

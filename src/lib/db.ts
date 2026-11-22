@@ -184,7 +184,7 @@ export async function createSharedDb(store: StateStore): Promise<Db> {
     transaction: <T>(fn: (q: QueryFn) => Promise<T>) =>
       enqueue(async () => {
         let lastError: unknown = null;
-        for (let attempt = 0; attempt < 10; attempt += 1) {
+        for (let attempt = 0; attempt < 25; attempt += 1) {
           const stored = await store.read();
           await restoreState(pglite, stored?.state ?? emptyState());
           appliedEtag = stored?.etag ?? null;
@@ -215,7 +215,8 @@ export async function createSharedDb(store: StateStore): Promise<Db> {
           } catch (error) {
             lastError = error;
             if (!(error instanceof StateConflictError)) throw error;
-            await sleep(20 + Math.floor(Math.random() * 60));
+            console.warn("[colony] shared state conflict", { attempt: attempt + 1 });
+            await sleep(20 + Math.floor(Math.random() * 80));
           }
         }
         throw new Error(

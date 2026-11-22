@@ -1,0 +1,54 @@
+{
+  "label": "01-create",
+  "status": 200,
+  "vercelId": "sfo1::iad1::qm2gv-1795321697720-289aa97375dd",
+  "body": {
+    "roomCode": "C4PC3N",
+    "snapshot": {
+      "protocol": 1,
+      "serverTime": 1795321698195,
+      "contentVersion": "2026.11.1",
+      "version": 1,
+      "room": {
+        "code": "C4PC3N",
+        "status": "lobby",
+        "settings": {
+          "mode": "hopper",
+          "packs": [
+            "core"
+          ],
+          "rounds": 1,
+          "maxPlayers": 20,
+          "hopperSeconds": 20,
+          "spiderSeconds": 90,
+          "familyFriendly": true
+        },
+        "settingsVersion": 1,
+        "hostMemberId": "mem_k9sfx0RNqeaSNkfV"
+      },
+      "you": {
+        "memberId": "mem_k9sfx0RNqeaSNkfV",
+        "nickname": "Ada",
+        "isHost": true,
+        "spectator": false,
+        "ready": true
+      },
+      "members": [
+        {
+          "id": "mem_k9sfx0RNqeaSNkfV",
+          "nickname": "Ada",
+          "avatar": 6,
+          "isHost": true,
+          "ready": true,
+          "connected": true,
+          "spectator": false,
+          "left": false
+        }
+      ],
+      "match": null,
+      "round": null,
+      "feedback": null,
+      "serverIssues": []
+    }
+  }
+}
