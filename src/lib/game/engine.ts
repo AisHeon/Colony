@@ -654,9 +654,19 @@ export async function tickRoom(q: QueryFn, room: RoomRow, now: number): Promise<
     const roundsNow = await matchRounds(q, match.id);
     const round = roundsNow.find((r) => !r.finalized_at);
     if (!round) {
-      if (roundsNow.length >= match.round_count) {
-        await finishMatch(q, match, now);
+      // A finalized round stays in `results` until its results window has
+      // elapsed. That round is intentionally excluded from `activeRound`, so
+      // advancing has to look at the latest finalized round explicitly.
+      const latest = roundsNow[roundsNow.length - 1];
+      if (!latest || latest.phase !== "results") return;
+      const resultsAt = latest.results_at ?? (latest.finalized_at ?? now) + TIMERS.resultsMs;
+      if (now < resultsAt) return;
+      const nextIndex = latest.idx + 1;
+      if (nextIndex < match.round_count) {
+        await createRound(q, match, nextIndex, now);
+        continue;
       }
+      await finishMatch(q, match, now);
       return;
     }
     roundsDone = roundsNow.filter((r) => r.finalized_at).length;

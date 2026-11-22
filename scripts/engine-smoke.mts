@@ -346,13 +346,66 @@ console.log("\n[4] Host migration and rematch reset");
   // The old host comes back online, so the room has two connected players again.
   await db.query("update room_member set last_seen_at = $2 where id = $1", [member.id, T + 12_000]);
   await startMatch(db, room.code, memberB!.id, T + 12_000);
+  // Let the round play out and its results window elapse before rematching.
   await advanceRoom(db, room.code, T + 50_000);
-  const rematch = await applyIntent(db, room.code, b, { type: "match:again" }, rid(), T + 55_000);
+  await advanceRoom(db, room.code, T + 59_000);
+  const rematch = await applyIntent(db, room.code, b, { type: "match:again" }, rid(), T + 59_100);
   assert.equal(rematch.ok, true);
-  const back = await buildSnapshotForRoom(db, room, b, T + 55_000);
+  const back = await buildSnapshotForRoom(db, room, b, T + 59_100);
   assert.equal(back.room.status, "lobby");
   assert.equal(back.match?.points[memberB!.id] ?? 0, 0);
   console.log("    ✓ host migration kept the match; rematch returns to a clean lobby");
+}
+
+// ---------------------------------------------------------------------------
+console.log("\n[5] Multi-round matches advance after results");
+{
+  const T = Date.now() + 4_000_000;
+  const a = await guest("A");
+  const b = await guest("B");
+  const { room, member } = await createRoom(db, a, "Ada", { mode: "anthill", rounds: 2 }, T);
+  await joinRoom(db, b, room.code, "Bo", T);
+  await applyIntent(db, room.code, b, { type: "room:ready", ready: true }, rid(), T);
+  await applyIntent(db, room.code, a, { type: "room:ready", ready: true }, rid(), T);
+  const match = await startMatch(db, room.code, member.id, T);
+
+  await advanceRoom(db, room.code, T + 3_100);
+  const firstRound = await db.one<{ id: string }>(
+    "select id from round where match_id = $1 and idx = 0",
+    [match.id],
+  );
+  const valid = await firstValidAnswer(firstRound!.id);
+  assert.equal((await answer(room.code, a, valid, T + 4_000)).ok, true);
+  assert.equal((await answer(room.code, b, valid, T + 4_100)).ok, true);
+
+  await advanceRoom(db, room.code, T + 41_000);
+  let snapshot = await buildSnapshotForRoom(db, room, a, T + 41_000);
+  assert.equal(snapshot.round?.phase, "results", "first round shows its results");
+  assert.equal(snapshot.match?.status, "active", "results window keeps the match active");
+
+  const advanced = await applyIntent(db, room.code, a, { type: "match:advance" }, rid(), T + 45_000);
+  assert.equal(advanced.ok, true, `host could advance: ${advanced.message}`);
+  snapshot = await buildSnapshotForRoom(db, room, a, T + 45_000);
+  assert.equal(snapshot.round?.index, 2, "second round was created after results");
+  assert.equal(snapshot.round?.phase, "countdown");
+  assert.equal(snapshot.match?.status, "active");
+
+  await advanceRoom(db, room.code, T + 49_000);
+  const secondRound = await db.one<{ id: string }>(
+    "select id from round where match_id = $1 and idx = 1",
+    [match.id],
+  );
+  const secondValid = await firstValidAnswer(secondRound!.id);
+  assert.equal((await answer(room.code, a, secondValid, T + 49_500)).ok, true);
+  assert.equal((await answer(room.code, b, secondValid, T + 49_600)).ok, true);
+  await advanceRoom(db, room.code, T + 80_000);
+  await advanceRoom(db, room.code, T + 88_100);
+
+  snapshot = await buildSnapshotForRoom(db, room, a, T + 88_100);
+  assert.equal(snapshot.round?.phase, "results");
+  assert.equal(snapshot.match?.status, "ended", "two-round match finishes after the final results window");
+  assert.equal(snapshot.match?.roundSummaries.length, 2, "both rounds were scored");
+  console.log("    ✓ results advance into the next round and finish a multi-round match");
 }
 
 console.log("\nAll engine smoke checks passed.");
