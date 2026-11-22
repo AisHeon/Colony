@@ -21,7 +21,12 @@ export function SpiderWebRound({
 }) {
   const round = snapshot.round!;
   const spider = round.spider;
-  const [nodes, setNodes] = useState<string[]>(() => spider?.myDraft?.nodes.map((node) => node.id) ?? []);
+  const draftNodes = (draft: typeof spider) => {
+    if (!draft) return [];
+    const saved = draft.myDraft?.nodes.map((node) => node.id) ?? [];
+    return saved[0] === draft.start.id ? saved : [draft.start.id, ...saved.filter((id) => id !== draft.start.id)];
+  };
+  const [nodes, setNodes] = useState<string[]>(() => draftNodes(spider));
   const [names, setNames] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     for (const node of spider?.myDraft?.nodes ?? []) initial[node.id] = node.name;
@@ -40,7 +45,7 @@ export function SpiderWebRound({
   useEffect(() => {
     if (lastRound.current === round.id) return;
     lastRound.current = round.id;
-    setNodes(round.spider?.myDraft?.nodes.map((node) => node.id) ?? []);
+    setNodes(draftNodes(round.spider));
     const fresh: Record<string, string> = {};
     for (const node of round.spider?.myDraft?.nodes ?? []) fresh[node.id] = node.name;
     if (round.spider) {
@@ -119,8 +124,9 @@ export function SpiderWebRound({
   }
 
   async function clearDraft() {
-    if (nodes.length && !window.confirm("Clear this draft? Your saved best path stays.")) return;
-    await persist([], nodes);
+    if (!spider) return;
+    if (nodes.length > 1 && !window.confirm("Clear this draft? Your saved best path stays.")) return;
+    await persist([spider.start.id], nodes);
   }
 
   return (
@@ -228,7 +234,7 @@ export function SpiderWebRound({
             <button type="button" className="btn btn-sm" onClick={undo} disabled={!history.length}>
               Undo
             </button>
-            <button type="button" className="btn btn-sm" onClick={clearDraft} disabled={!nodes.length}>
+            <button type="button" className="btn btn-sm" onClick={clearDraft} disabled={nodes.length <= 1}>
               Clear draft
             </button>
             <span className="grow" />
