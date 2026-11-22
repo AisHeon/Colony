@@ -9,6 +9,7 @@ Last verified: 22 November 2026. Every number below was produced by running the 
 | TypeScript | `npm run typecheck` | clean, strict mode |
 | Unit rules | `npm test` | 29 / 29 pass |
 | Engine, real DB | `npm run test:engine` | Anthill, Hopper, Beehive, host migration, rematch pass |
+| Shared serverless state | `npm run test:shared` | 3 independent instances share one CAS store; concurrent writes, join, play and settlement pass |
 | Content audit | `npm run content:verify` | all checks pass |
 | Production build | `npm run build` | 9 static pages + 8 API/room routes |
 
@@ -71,7 +72,7 @@ Seed output: **1,423 entities · 121 aliases · 45 prompts · 2,260 answer links
 1. **Transport.** Vercel cannot host a long-lived Socket.IO server, so the authoritative state is delivered by adaptive polling (`/api/rooms/[code]/state`, roughly every 1.2 s in a live round, backing off when idle). The server still owns every deadline through a lazy logical clock. This is a deployment constraint, not a client-authoritative shortcut.
 2. **Hopper.** Ranks are editorial estimates, never survey results; the UI says so on every question.
 3. **Solar System pool.** The planet prompt has eight answers because the Solar System has eight planets. The verifier's floor is eight for this reason.
-4. **Database on Vercel.** The code supports `DATABASE_URL`, but no hosted Postgres is provisioned from this workspace. Without it the deployment falls back to PGlite in `/tmp`, seeded from `db/seed.sql` on first use. A warm instance can create and play rooms, verified locally; instances do not share rooms and cold starts reset them. Attach Postgres for persistent, cross-device multiplayer.
+4. **Shared state on Vercel.** No hosted Postgres is provisioned from this workspace, so the deployment uses a private Vercel Blob document as its durable store: content is seeded into in-memory PGlite, and mutable tables are persisted with ETag compare-and-swap. Every serverless instance reads the same room state, verified live across independent HTTPS requests. Writes are serialized through one document, which is appropriate for party-sized traffic; `DATABASE_URL` remains the preferred path for high concurrency.
 
 ## Not implemented
 
@@ -79,6 +80,12 @@ Seed output: **1,423 entities · 121 aliases · 45 prompts · 2,260 answer links
 - Accounts, friends, cross-room chat, spectator chat, moderation console, push notifications.
 - Audio, localization, seasonal content packs.
 - Native apps.
+
+## Live verification
+
+- `npm run test:shared` starts three independent Db instances over one store, then creates, joins, concurrently readies, starts, answers and settles a room across them.
+- The production deployment is verified by separate HTTPS requests for create, state, join, ready, start and settlement; the response bodies are recorded in `evidence/`.
+- The hosted UI is exercised in a real browser for create and join; API evidence alone is not treated as UI proof.
 
 ## Manual review still worth doing on the live preview
 

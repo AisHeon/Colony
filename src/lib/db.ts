@@ -6,16 +6,25 @@
  * PGlite is a real Postgres build, so one schema and one SQL dialect serve both.
  */
 
+import {
+  BlobStateStore,
+  MemoryStateStore,
+  StateConflictError,
+  emptyState,
+  restoreState,
+  snapshotState,
+  type StateStore,
+} from "./state-store";
+
 export type Row = Record<string, unknown>;
 export type QueryFn = <T extends Row = Row>(sql: string, params?: unknown[]) => Promise<T[]>;
-
 export interface Db {
   query: QueryFn;
   one: <T extends Row = Row>(sql: string, params?: unknown[]) => Promise<T | null>;
   transaction: <T>(fn: (q: QueryFn) => Promise<T>) => Promise<T>;
   /** Multi-statement SQL (schema/migrations). No parameters. */
   exec: (sql: string) => Promise<void>;
-  kind: "postgres" | "pglite";
+  kind: "postgres" | "pglite" | "blob";
 }
 
 type PgPoolLike = {
@@ -73,6 +82,149 @@ function wrap(pool: PgPoolLike, kind: Db["kind"]): Db {
   };
 }
 
+type PgliteLike = {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: Row[] }>;
+  transaction: <T>(
+    fn: (tx: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Row[] }> }) => Promise<T>,
+  ) => Promise<T>;
+  exec: (sql: string) => Promise<void>;
+};
+
+function wrapPglite(pglite: PgliteLike, kind: Db["kind"] = "pglite"): Db {
+  const query: QueryFn = async <T extends Row = Row>(sql: string, params: unknown[] = []) => {
+    const res = await pglite.query(sql, params as never[]);
+    return res.rows as T[];
+  };
+
+  return {
+    kind,
+    exec: async (sql: string) => {
+      await pglite.exec(sql);
+    },
+    query: query as Db["query"],
+    one: async <T extends Row = Row>(sql: string, params: unknown[] = []): Promise<T | null> => {
+      const res = await pglite.query(sql, params as never[]);
+      return ((res.rows[0] as T | undefined) ?? null) as T | null;
+    },
+    transaction: async <T>(fn: (q: QueryFn) => Promise<T>) => {
+      return (await pglite.transaction(async (tx) => {
+        const txQuery = (async (sql: string, params: unknown[] = []) => {
+          const res = await tx.query(sql, params as never[]);
+          return res.rows as Row[];
+        }) as QueryFn;
+        return fn(txQuery);
+      })) as T;
+    },
+  };
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Shared, durable state for serverless instances: content is in memory, mutable
+ * tables live in a versioned JSON document with ETag compare-and-swap.
+ */
+export async function createSharedDb(store: StateStore): Promise<Db> {
+  const { PGlite } = await import("@electric-sql/pglite");
+  const pglite = (await PGlite.create()) as unknown as PgliteLike;
+  const base = wrapPglite(pglite);
+  await ensureSchema(base);
+  await ensureContent(base);
+
+  let appliedEtag: string | null = null;
+  let lastHeadAt = 0;
+  let tail: Promise<unknown> = Promise.resolve();
+
+  function enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const run = tail.then(task, task);
+    tail = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  async function sync(maxAgeMs: number) {
+    if (Date.now() - lastHeadAt < maxAgeMs) return;
+    const meta = await store.head();
+    if (!meta) {
+      if (appliedEtag !== null) {
+        await restoreState(pglite, emptyState());
+        appliedEtag = null;
+      }
+    } else if (meta.etag !== appliedEtag) {
+      const stored = await store.read();
+      if (stored) {
+        await restoreState(pglite, stored.state);
+        appliedEtag = stored.etag;
+      }
+    }
+    lastHeadAt = Date.now();
+  }
+
+  return {
+    kind: "blob",
+    exec: (sql: string) =>
+      enqueue(async () => {
+        await sync(0);
+        await pglite.exec(sql);
+      }),
+    query: (<T extends Row = Row>(sql: string, params: unknown[] = []) =>
+      enqueue(async () => {
+        await sync(150);
+        const res = await pglite.query(sql, params as never[]);
+        return res.rows as T[];
+      })) as QueryFn,
+    one: <T extends Row = Row>(sql: string, params: unknown[] = []) =>
+      enqueue(async () => {
+        await sync(150);
+        const res = await pglite.query(sql, params as never[]);
+        return ((res.rows[0] as T | undefined) ?? null) as T | null;
+      }),
+    transaction: <T>(fn: (q: QueryFn) => Promise<T>) =>
+      enqueue(async () => {
+        let lastError: unknown = null;
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+          const stored = await store.read();
+          await restoreState(pglite, stored?.state ?? emptyState());
+          appliedEtag = stored?.etag ?? null;
+          lastHeadAt = Date.now();
+
+          const value = (await pglite.transaction(async (tx) => {
+            const txQuery = (async (sql: string, params: unknown[] = []) => {
+              const res = await tx.query(sql, params as never[]);
+              return res.rows as Row[];
+            }) as QueryFn;
+            return fn(txQuery);
+          })) as T;
+
+          const nextVersion = (stored?.state.version ?? 0) + 1;
+          const state = await snapshotState(pglite, nextVersion);
+          const unchanged =
+            JSON.stringify(state.tables) === JSON.stringify(stored?.state.tables ?? {});
+          if (unchanged) {
+            // Idle polls still run the tick; do not churn the shared blob.
+            appliedEtag = stored?.etag ?? null;
+            lastHeadAt = Date.now();
+            return value;
+          }
+          try {
+            appliedEtag = await store.write(state, stored?.etag ?? null);
+            lastHeadAt = Date.now();
+            return value;
+          } catch (error) {
+            lastError = error;
+            if (!(error instanceof StateConflictError)) throw error;
+            await sleep(20 + Math.floor(Math.random() * 60));
+          }
+        }
+        throw new Error(
+          `Shared state is busy; retry the request.${lastError instanceof Error ? ` (${lastError.message})` : ""}`,
+        );
+      }),
+  };
+}
+
 async function createDb(): Promise<Db> {
   const url = process.env.DATABASE_URL?.trim();
 
@@ -91,39 +243,20 @@ async function createDb(): Promise<Db> {
     return wrap(pool as unknown as PgPoolLike, "postgres");
   }
 
-  // Embedded fallback. Local data lives in ./.colony-data; on a serverless
-  // host only /tmp is writable, so use a per-instance directory there.
+  // Serverless shared state: content stays in memory, rooms are persisted in a
+  // Blob document with ETag compare-and-swap. Production without DATABASE_URL.
+  const explicit = process.env.COLONY_STATE_STORE;
+  if (explicit === "memory") return createSharedDb(new MemoryStateStore());
+  if (explicit === "blob" || (process.env.VERCEL && process.env.BLOB_READ_WRITE_TOKEN)) {
+    return createSharedDb(new BlobStateStore());
+  }
+
+  // Embedded local fallback. Data lives in ./.colony-data so restarts keep rooms.
   const { PGlite } = await import("@electric-sql/pglite");
-  const serverless = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-  const dataDir = process.env.COLONY_PGLITE_PATH || (serverless ? "/tmp/colony-data" : ".colony-data");
+  const dataDir = process.env.COLONY_PGLITE_PATH || ".colony-data";
   const pglite = await PGlite.create({ dataDir });
 
-  const query: QueryFn = async <T extends Row = Row>(sql: string, params: unknown[] = []) => {
-    const res = await pglite.query<T>(sql, params as never[]);
-    return res.rows as T[];
-  };
-
-  const db: Db = {
-    kind: "pglite",
-    exec: async (sql: string) => {
-      await pglite.exec(sql);
-    },
-    query: query as Db["query"],
-    one: async <T extends Row = Row>(sql: string, params: unknown[] = []): Promise<T | null> => {
-      const res = await pglite.query<T>(sql, params as never[]);
-      return ((res.rows[0] as T | undefined) ?? null) as T | null;
-    },
-    transaction: async <T>(fn: (q: QueryFn) => Promise<T>) => {
-      return (await pglite.transaction(async (tx) => {
-        const txQuery = (async (sql: string, params: unknown[] = []) => {
-          const res = await tx.query(sql, params as never[]);
-          return res.rows as Row[];
-        }) as QueryFn;
-        return fn(txQuery);
-      })) as T;
-    },
-  };
-
+  const db = wrapPglite(pglite as unknown as PgliteLike);
   await ensureSchema(db);
   await ensureContent(db);
   return db;

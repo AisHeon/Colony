@@ -13,10 +13,13 @@
     "content:verify": "tsx scripts/verify-content.mts",
     "content:import": "tsx scripts/import-content.mts",
     "test": "tsx --test tests/*.test.ts",
-    "test:engine": "node --import tsx --conditions react-server scripts/engine-smoke.mts"
+    "test:engine": "node --import tsx --conditions react-server scripts/engine-smoke.mts",
+    "test:shared": "node --import tsx --conditions react-server scripts/shared-state-smoke.mts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",
+    "@vercel/blob": "^2.9.0",
+    "@vercel/blob": "^2.9.0",
     "next": "^15.5.4",
     "pg": "^8.13.1",
     "react": "^19.1.0",

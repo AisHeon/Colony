@@ -151,11 +151,13 @@ async function writeReceipt(
   now: number,
 ): Promise<IntentResult> {
   try {
-    await db.query(
-      `insert into intent_receipt (request_id, room_id, member_id, type, result, created_at)
-       values ($1,$2,$3,$4,$5::jsonb,$6) on conflict (request_id) do nothing`,
-      [requestId, roomId, memberId, type, JSON.stringify(outcome), now],
-    );
+    await db.transaction(async (q) => {
+      await q(
+        `insert into intent_receipt (request_id, room_id, member_id, type, result, created_at)
+         values ($1,$2,$3,$4,$5::jsonb,$6) on conflict (request_id) do nothing`,
+        [requestId, roomId, memberId, type, JSON.stringify(outcome), now],
+      );
+    });
   } catch (error) {
     console.error("[colony] receipt write failed", (error as Error).message);
   }

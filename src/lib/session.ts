@@ -32,11 +32,13 @@ export async function ensureGuest(): Promise<{ guest: Guest; isNew: boolean }> {
   const token = newToken();
   const id = newId("gst");
   const db = await getDb();
-  await db.query("insert into guest_session (id, token_hash, created_at) values ($1, $2, $3)", [
-    id,
-    hashToken(token),
-    Date.now(),
-  ]);
+  await db.transaction(async (q) => {
+    await q("insert into guest_session (id, token_hash, created_at) values ($1, $2, $3)", [
+      id,
+      hashToken(token),
+      Date.now(),
+    ]);
+  });
 
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
@@ -65,10 +67,12 @@ export async function createGuestWithToken(): Promise<{ guest: Guest; token: str
   const token = newToken();
   const id = newId("gst");
   const db = await getDb();
-  await db.query("insert into guest_session (id, token_hash, created_at) values ($1, $2, $3)", [
-    id,
-    hashToken(token),
-    Date.now(),
-  ]);
+  await db.transaction(async (q) => {
+    await q("insert into guest_session (id, token_hash, created_at) values ($1, $2, $3)", [
+      id,
+      hashToken(token),
+      Date.now(),
+    ]);
+  });
   return { guest: { id, token }, token };
 }

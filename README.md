@@ -30,8 +30,9 @@ npm run dev          # http://localhost:3000
 
 The same schema and SQL run on:
 
-- **Postgres** when `DATABASE_URL` is set.
-- **PGlite** (embedded Postgres compiled to WASM) otherwise, stored in `.colony-data/`. This is what local development, tests and scripts use.
+- **Postgres** when `DATABASE_URL` is set. This is the preferred path at scale.
+- **PGlite in memory + shared Blob state** on Vercel. Content stays in memory; rooms, players, matches and answers are stored as one JSON document in a private Vercel Blob store, guarded by ETag compare-and-swap (`ifMatch`). Every instance reads and writes the same durable state, so a room created on one serverless instance is visible to the next.
+- **PGlite on disk** locally, in `.colony-data/`. This is what local development, tests and scripts use.
 
 ```bash
 cp .env.example .env.local
@@ -48,6 +49,7 @@ For a hosted deployment, point `DATABASE_URL` at a pooled Postgres connection st
 npm run typecheck        # TypeScript, strict
 npm test                 # 29 rule tests (placement, sharing, validation, Spider, Party)
 npm run test:engine      # full engine smoke on a real PGlite database and simulated clock
+npm run test:shared      # three independent instances sharing one Blob-style state store
 npm run content:verify   # counts, pools, duplicates, solvability, provenance
 npm run build            # production build
 npx tsx scripts/dump-seed.mts   # regenerate db/seed.sql after content changes
@@ -78,6 +80,8 @@ scripts/                 migrate, seed, verify, import, engine smoke
 
 **Idempotency.** Every mutation carries a request ID; `intent_receipt` stores the result, so a retried tap cannot double-submit or double-score.
 
+**Shared serverless state.** On Vercel, the mutable tables are persisted in Vercel Blob as one versioned document. A write first runs against the latest snapshot, then commits with `ifMatch: etag`. If another instance committed in between, the whole transaction is reloaded and replayed, so concurrent joins, reads and answers cannot silently overwrite each other. Idle polls that change nothing do not write at all.
+
 ## Design
 
 The visual language is original: off-white paper, deep green ink, six flat creature marks drawn as inline SVG, generous type, and a single accent per mode. There are no external fonts, images or trackers. Motion respects `prefers-reduced-motion`, every control is keyboard reachable, and all interactive targets are at least 44 px.
@@ -95,12 +99,17 @@ See [CONTENT.md](CONTENT.md) for the catalog and JSON import format.
 The repository is a standard Next.js 15 app.
 
 1. Import the repo into Vercel (framework preset: Next.js).
-2. Add `DATABASE_URL` in Project → Settings → Environment Variables (Production and Preview).
-3. Run the migration and seed once from a machine that can reach that database:
+2. The project's private Blob store supplies `BLOB_READ_WRITE_TOKEN` automatically. No schema setup is needed; content is seeded from `db/seed.sql` on first cold start.
+3. Deploy.
+
+For a large deployment or one that needs SQL analytics, attach Postgres instead:
+
+1. Add `DATABASE_URL` in Project → Settings → Environment Variables (Production and Preview).
+2. Run the migration and seed once against it:
    ```bash
    DATABASE_URL=... npm run db:migrate
    DATABASE_URL=... npm run db:seed
    ```
-4. Deploy.
+3. Deploy. Postgres takes precedence over Blob when both are present.
 
-Without `DATABASE_URL`, Vercel falls back to PGlite in `/tmp`, seeded automatically from `db/seed.sql`. The site and a room work on a warm instance, but each instance has its own database, so rooms are not shared between instances and disappear on cold starts. That mode is for a look around; a real multiplayer deployment needs Postgres and `npm run db:migrate && npm run db:seed` once against it.
+The shared Blob document is a single CAS-guarded JSON file. It is plenty for party-sized rooms, but every write is serialized; Postgres is the better choice for high concurrency.

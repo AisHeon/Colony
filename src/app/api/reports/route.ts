@@ -25,22 +25,24 @@ export async function POST(request: Request) {
       return ok({ error: { code: "RATE_LIMITED", message: "You've sent a few reports already. Try later." } }, { status: 429 });
     }
     const db = await getDb();
-    await db.query(
-      `insert into content_report
-         (id, kind, target_id, content_version, submitted_text, reason, member_id, room_code, review_status, created_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,'open',$9)`,
-      [
-        newId("rep"),
-        body.kind,
-        body.targetId,
-        CONTENT_VERSION,
-        body.text,
-        body.reason ?? null,
-        guest?.id ?? null,
-        body.roomCode ?? null,
-        Date.now(),
-      ],
-    );
+    await db.transaction(async (q) => {
+      await q(
+        `insert into content_report
+           (id, kind, target_id, content_version, submitted_text, reason, member_id, room_code, review_status, created_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,'open',$9)`,
+        [
+          newId("rep"),
+          body.kind,
+          body.targetId,
+          CONTENT_VERSION,
+          body.text,
+          body.reason ?? null,
+          guest?.id ?? null,
+          body.roomCode ?? null,
+          Date.now(),
+        ],
+      );
+    });
     return ok({ ok: true, message: "Thanks — that's in the review queue." });
   } catch (error) {
     return fail(error);
