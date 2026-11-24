@@ -5,7 +5,7 @@
 
 export const GAME_TITLE = "Colony";
 export const GAME_TAGLINE = "Quick answers. Clever connections. One room.";
-export const CONTENT_VERSION = "2026.11.2";
+export const CONTENT_VERSION = "2026.11.3";
 export const PROTOCOL_VERSION = 1;
 
 export type ModeId = "party" | "anthill" | "beehive" | "spider" | "hopper";
@@ -105,6 +105,56 @@ export const MODES: Record<
 
 export const PLAYABLE_MODES: PlayableMode[] = ["anthill", "beehive", "spider", "hopper"];
 export const MODE_ORDER: ModeId[] = ["party", "anthill", "beehive", "spider", "hopper"];
+
+export type TopicPackId =
+  | "all"
+  | "world_history"
+  | "geography"
+  | "science"
+  | "animals"
+  | "food"
+  | "sports"
+  | "music"
+  | "movies_tv"
+  | "video_games"
+  | "wordplay"
+  | "mythology"
+  | "space"
+  | "classics";
+
+export type TopicPack = {
+  id: TopicPackId;
+  name: string;
+  short: string;
+  icon: "all" | "globe" | "pin" | "flask" | "paw" | "bowl" | "medal" | "note" | "film" | "gamepad" | "letters" | "bolt" | "star" | "spark";
+};
+
+/** The host can mix up to four packs. The default is every verified prompt. */
+export const TOPIC_PACKS: TopicPack[] = [
+  { id: "all", name: "All topics", short: "All", icon: "all" },
+  { id: "world_history", name: "World History", short: "History", icon: "globe" },
+  { id: "geography", name: "Geography", short: "Places", icon: "pin" },
+  { id: "science", name: "Science & Nature", short: "Science", icon: "flask" },
+  { id: "animals", name: "Animals", short: "Animals", icon: "paw" },
+  { id: "food", name: "Food", short: "Food", icon: "bowl" },
+  { id: "sports", name: "Sports", short: "Sports", icon: "medal" },
+  { id: "music", name: "Music", short: "Music", icon: "note" },
+  { id: "movies_tv", name: "Movies & TV", short: "Screen", icon: "film" },
+  { id: "video_games", name: "Video Games", short: "Games", icon: "gamepad" },
+  { id: "wordplay", name: "Wordplay", short: "Words", icon: "letters" },
+  { id: "mythology", name: "Mythology & Legend", short: "Myths", icon: "bolt" },
+  { id: "space", name: "Space", short: "Space", icon: "star" },
+  { id: "classics", name: "Classics", short: "Classics", icon: "spark" },
+];
+
+export function topicPack(id: string): TopicPack | undefined {
+  return TOPIC_PACKS.find((pack) => pack.id === id);
+}
+
+export function packLabel(packs: string[]): string {
+  if (!packs.length || packs.includes("all")) return "All topics";
+  return packs.map((id) => topicPack(id)?.name ?? id).join(" + ");
+}
 
 /** Placement points for every mode. Index = placement (1-based). */
 export const PLACEMENT_POINTS = [900, 750, 600, 450, 300, 200, 100, 75, 50] as const;
@@ -245,7 +295,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   rounds: MODES.party.defaultRounds,
   maxPlayers: LIMITS.maxPlayers,
   familyFriendly: true,
-  packs: ["core"],
+  packs: ["all"],
   spiderSeconds: 90,
   hopperSeconds: 20,
 };

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MODES, type RoomSettings } from "@/lib/config";
+import { MODES, packLabel, type RoomSettings } from "@/lib/config";
 import type { Snapshot } from "@/lib/game/types";
-import { Avatar, CopyButton } from "@/components/ui";
+import { CopyButton } from "@/components/ui";
+import { AntAvatar } from "@/components/ColonyWorld";
 import { RoomSettingsForm } from "@/components/RoomSettingsForm";
+import { TopicPicker } from "@/components/TopicPacks";
 import type { IntentAck, IntentBody } from "@/components/useRoom";
 
 export function Lobby({
@@ -54,6 +56,7 @@ export function Lobby({
   }
 
   const mode = MODES[snapshot.room.settings.mode];
+  const packs = snapshot.room.settings.packs ?? ["all"];
 
   return (
     <div className="game-grid lobby-screen">
@@ -63,26 +66,59 @@ export function Lobby({
             <div className="stack-sm">
               <p className="eyebrow">Room code · share this</p>
               <div className="room-code lobby-code">
-                {snapshot.room.code}
+                <ScrambleCode code={snapshot.room.code} />
               </div>
             </div>
             <div className="row-tight lobby-actions">
-              <CopyButton value={snapshot.room.code} label="Copy code" copiedLabel="Code copied" />
-              <CopyButton value={invite} label="Copy invite link" copiedLabel="Link copied" />
-              <button type="button" className="btn btn-sm" onClick={share}>
+              <CopyButton value={snapshot.room.code} label="Copy code" copiedLabel="Copied" />
+              <CopyButton value={invite} label="Invite link" copiedLabel="Link copied" />
+              <button type="button" className="btn btn-ghost btn-sm" onClick={share}>
                 Share
               </button>
             </div>
           </div>
-          <p className="hint" style={{ color: "var(--ink)" }}>
-            Anyone with this code can join while the room is open. If the code won&apos;t copy,
-            select it and copy manually.
+          <p className="lobby-code-hint">
+            Send this code. Anyone who has it can join while the room is open.
           </p>
           {shareNote ? (
             <p className="small" role="status">
               {shareNote}
             </p>
           ) : null}
+        </section>
+
+        <section className="lobby-cta">
+          <div className="lobby-cta-copy">
+            <span className="eyebrow">{snapshot.you.isHost ? "Ready when you are" : "Take your seat"}</span>
+            <p>
+              {snapshot.you.isHost
+                ? (startReason ?? "Everyone is ready. The tunnel is waiting.")
+                : snapshot.you.ready
+                  ? "You're ready. Waiting for the host to start."
+                  : "Mark ready so the host can start."}
+            </p>
+          </div>
+          {snapshot.you.isHost ? (
+            <button
+              type="button"
+              className="btn btn-primary btn-lg lobby-start"
+              disabled={!canStart || pending}
+              onClick={() => send({ type: "match:start" })}
+              title={startReason ?? "Start the match"}
+            >
+              Start match
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`btn btn-lg lobby-start ${snapshot.you.ready ? "btn-secondary" : "btn-primary"}`}
+              aria-pressed={snapshot.you.ready}
+              disabled={pending}
+              onClick={() => send({ type: "room:ready", ready: !snapshot.you.ready })}
+            >
+              {snapshot.you.ready ? "Ready — tap to undo" : "I'm ready"}
+            </button>
+          )}
         </section>
 
         <section className="card lobby-panel stack">
@@ -98,13 +134,13 @@ export function Lobby({
                 key={member.id}
                 className={`member${member.id === snapshot.you.memberId ? " is-you" : ""}`}
               >
-                <Avatar name={member.nickname} index={member.avatar} />
+                <AntAvatar name={member.nickname} index={member.avatar} />
                 <span className="member-name grow">
                   {member.nickname}
                   {member.id === snapshot.you.memberId ? <span className="tiny muted"> · you</span> : null}
                 </span>
                 {member.isHost ? <span className="badge badge-accent">Host</span> : null}
-                {member.ready ? <span className="badge">Ready</span> : null}
+                {member.ready ? <span className="badge badge-ok">Ready</span> : null}
                 {!member.connected ? <span className="badge badge-warn">Away</span> : null}
                 <span className={`dot ${member.connected ? "online" : ""}`} aria-hidden="true" />
               </li>
@@ -118,7 +154,7 @@ export function Lobby({
               <ul className="roster">
                 {spectators.map((member) => (
                   <li key={member.id} className="member">
-                    <Avatar name={member.nickname} index={member.avatar} size="sm" />
+                    <AntAvatar name={member.nickname} index={member.avatar} size={30} />
                     <span className="member-name grow">{member.nickname}</span>
                     <span className="badge">spectator</span>
                   </li>
@@ -126,6 +162,26 @@ export function Lobby({
               </ul>
             </div>
           ) : null}
+        </section>
+
+        <section className="card lobby-panel stack-sm topic-panel">
+          <div className="spread">
+            <h2>Topics</h2>
+            <span className="badge badge-outline">{packLabel(packs)}</span>
+          </div>
+          {snapshot.you.isHost ? (
+            <>
+              <TopicPicker
+                value={packs}
+                compact
+                disabled={pending}
+                onChange={(next) => send({ type: "room:updateSettings", settings: { packs: next } })}
+              />
+              <p className="hint">Tap to mix. Changing topics clears ready states.</p>
+            </>
+          ) : (
+            <p className="small muted">{packLabel(packs)}</p>
+          )}
         </section>
 
         {snapshot.you.isHost && snapshot.room.status !== "closed" ? (
@@ -188,39 +244,45 @@ export function Lobby({
             ) : null}
           </dl>
 
-          {snapshot.you.isHost ? (
-            <div className="stack-sm">
-              <button
-                type="button"
-                className="btn btn-primary btn-lg lobby-start"
-                disabled={!canStart || pending}
-                onClick={() => send({ type: "match:start" })}
-                title={startReason ?? "Start the match"}
-              >
-                Start match
-              </button>
-              <p className="hint" role="status">
-                {startReason ?? "Everyone is ready. Settings freeze when you start."}
-              </p>
-            </div>
-          ) : (
-            <div className="stack-sm">
-              <button
-                type="button"
-                className={`btn btn-lg ${snapshot.you.ready ? "" : "btn-primary"}`}
-                aria-pressed={snapshot.you.ready}
-                disabled={pending}
-                onClick={() => send({ type: "room:ready", ready: !snapshot.you.ready })}
-              >
-                {snapshot.you.ready ? "Ready — tap to unready" : "I'm ready"}
-              </button>
-              <p className="hint" role="status">
-                {snapshot.you.ready ? "Waiting for the host to start." : "Mark ready when you're set."}
-              </p>
-            </div>
-          )}
+          <p className="hint" role="status">
+            {snapshot.you.isHost
+              ? "Settings freeze when you start. You can still rematch afterwards."
+              : "The host starts when everyone is ready."}
+          </p>
         </section>
       </aside>
     </div>
   );
+}
+
+function ScrambleCode({ code }: { code: string }) {
+  const [display, setDisplay] = useState(code.replace(/./g, "·"));
+
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setDisplay(code);
+      return;
+    }
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let frame = 0;
+    const timer = window.setInterval(() => {
+      frame += 1;
+      if (frame > 10) {
+        setDisplay(code);
+        window.clearInterval(timer);
+        return;
+      }
+      const settled = Math.floor(frame / 2);
+      setDisplay(
+        [...code]
+          .map((character, index) =>
+            index < settled ? character : alphabet[Math.floor(Math.random() * alphabet.length)],
+          )
+          .join(""),
+      );
+    }, 55);
+    return () => window.clearInterval(timer);
+  }, [code]);
+
+  return <span aria-label={`Room code ${code}`}>{display}</span>;
 }

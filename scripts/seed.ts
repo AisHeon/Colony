@@ -15,6 +15,8 @@ import { COUNTRIES, CONTINENT_LABELS } from "../content/catalog/countries";
 import { PROMPTS } from "../content/catalog/prompts";
 import { HOPPER_QUESTIONS } from "../content/catalog/hopper";
 import { GRAPH_ENTITIES, GRAPH_EDGES, PUZZLES } from "../content/catalog/graph";
+import { HISTORY_GROUPS, HISTORY_POOL_GROUPS, HISTORY_PROMPTS } from "../content/catalog/history";
+import { WORDPLAY_PROMPTS } from "../content/catalog/wordplay";
 
 type SeedEntity = {
   id: string;
@@ -25,9 +27,36 @@ type SeedEntity = {
   description?: string;
 };
 
+/** Places every legacy prompt in the closest player-facing topic pack. */
+function packForPrompt(id: string): string {
+  if (id.includes("pokemon") || id.includes("minecraft") || id.includes("game_console")) return "video_games";
+  if (id.includes("disney") || id.includes("superhero") || id.includes("star_wars") || id.includes("hp_")) return "movies_tv";
+  if (id.includes("instrument")) return "music";
+  if (id.includes("sport")) return "sports";
+  if (id.includes("candy") || id.includes("fruit") || id.includes("vegetable") || id.includes("pizza") || id.includes("ice_cream") || id.includes("breakfast")) return "food";
+  if (id.includes("dog_breed") || id.includes("cat_breed") || id.endsWith(".animal")) return "animals";
+  if (id.includes("greek_figure")) return "mythology";
+  if (id.includes("planet") || id.includes("moon")) return "space";
+  if (id.includes("element") || id.includes("bone") || id.includes("dinosaur") || id.includes("gemstone")) return "science";
+  if (id.includes("country") || id.includes("capital") || id.includes("city") || id.includes("us_state") || id.includes("river") || id.includes("mountain") || id.includes("sea") || id.includes("volcano") || id.includes("currency")) return "geography";
+  if (id.includes("tree") || id.includes("flower")) return "science";
+  return "classics";
+}
+
 async function main() {
   const db = await getDb();
   console.log(`[seed] database: ${db.kind}`);
+
+  if (process.argv.includes("--if-needed")) {
+    const meta = await db.one<{ value: unknown }>("select value from content_meta where key = 'version'");
+    const value =
+      typeof meta?.value === "string" ? (JSON.parse(meta.value) as { version?: string }) : (meta?.value as { version?: string } | undefined);
+    if (value?.version === CONTENT_VERSION) {
+      console.log(`[seed] content ${CONTENT_VERSION} already current; skipping`);
+      return;
+    }
+    console.log(`[seed] upgrading content ${value?.version ?? "missing"} -> ${CONTENT_VERSION}`);
+  }
 
   const schema = readFileSync(path.join(process.cwd(), "db", "schema.sql"), "utf8");
   await db.exec(schema);
@@ -65,6 +94,55 @@ async function main() {
     add({ ...entity, aliases: [], attrs: {} });
   }
 
+  // History entities are generated from the compact answer groups. One name
+  // can appear in several prompts, but only one entity row is created for it.
+  const historyByGroup = new Map<string, SeedEntity[]>();
+  for (const [groupId, group] of Object.entries(HISTORY_GROUPS)) {
+    const pool: SeedEntity[] = [];
+    const seenInGroup = new Set<string>();
+    for (const raw of group.answers) {
+      const [namePart, aliasPart = ""] = raw.split("|").map((part) => part.trim());
+      if (!namePart) continue;
+      const key = normalizeKey(namePart);
+      if (seenInGroup.has(key)) continue;
+      seenInGroup.add(key);
+      const id = `hist_${entitySlug(namePart)}`;
+      let entity = entities.find((entry) => entry.id === id);
+      if (!entity) {
+        entity = {
+          id,
+          name: namePart,
+          type: `history_${group.kind}`,
+          aliases: aliasPart
+            .split(",")
+            .map((alias) => alias.trim())
+            .filter(Boolean),
+          attrs: {},
+          description: `Historical ${group.kind}.`,
+        };
+        add(entity);
+      }
+      pool.push(entity);
+    }
+    historyByGroup.set(groupId, pool);
+  }
+
+  const wordplayEntity = new Map<string, SeedEntity>();
+  for (const prompt of WORDPLAY_PROMPTS) {
+    for (const raw of prompt.answers) {
+      const name = raw.trim();
+      const key = normalizeKey(name);
+      if (!name || wordplayEntity.has(key)) continue;
+      const id = `word_${entitySlug(name)}`;
+      let entity = entities.find((entry) => entry.id === id);
+      if (!entity) {
+        entity = { id, name, type: "wordplay_answer", aliases: [], attrs: {}, description: "Wordplay answer." };
+        add(entity);
+      }
+      wordplayEntity.set(key, entity);
+    }
+  }
+
   // 2. Prompt answer selection ---------------------------------------------
   const byType = new Map<string, SeedEntity[]>();
   for (const entity of entities) {
@@ -91,6 +169,26 @@ async function main() {
       const key = normalizeKey(entity.name);
       if (seen.has(key)) return false;
       seen.add(key);
+      return true;
+    });
+  };
+
+  const selectHistoryAnswers = (prompt: (typeof HISTORY_PROMPTS)[number]): SeedEntity[] => {
+    const groupIds = prompt.pool ? HISTORY_POOL_GROUPS[prompt.pool] : [prompt.group];
+    const pool: SeedEntity[] = [];
+    const seen = new Set<string>();
+    for (const groupId of groupIds) {
+      for (const entity of historyByGroup.get(groupId) ?? []) {
+        if (seen.has(entity.id)) continue;
+        seen.add(entity.id);
+        pool.push(entity);
+      }
+    }
+    const seenNames = new Set<string>();
+    return pool.filter((entity) => {
+      const key = normalizeKey(entity.name);
+      if (seenNames.has(key)) return false;
+      seenNames.add(key);
       return true;
     });
   };
@@ -149,18 +247,89 @@ async function main() {
       }
       await q(
         `insert into prompt (id, kind, text, scope, pack, family_friendly, version, meta)
-         values ($1,$2,$3,$4,'core',true,$5,$6::jsonb)`,
+         values ($1,$2,$3,$4,$5,true,$6,$7::jsonb)`,
         [
           prompt.id,
           prompt.kind,
           prompt.text,
           prompt.scope,
+          packForPrompt(prompt.id),
           CONTENT_VERSION,
           JSON.stringify({
             scopeNoun: prompt.scopeNoun,
             expectedTypes: prompt.expectedTypes,
             rejectTypes: prompt.rejectTypes ?? {},
             answerCount: answers.length,
+          }),
+        ],
+      );
+      for (let index = 0; index < answers.length; index += 1) {
+        await q(
+          "insert into prompt_answer (prompt_id, entity_id, rarity) values ($1,$2,$3)",
+          [prompt.id, answers[index].id, assignRarity(answers.length, index)],
+        );
+        promptAnswerCount += 1;
+      }
+      console.log(`[seed] ${prompt.id.padEnd(34)} ${answers.length} answers`);
+    }
+
+    for (const prompt of HISTORY_PROMPTS) {
+      const answers = selectHistoryAnswers(prompt);
+      if (answers.length < 8) {
+        console.warn(`[seed] history prompt ${prompt.id} has only ${answers.length} answers; skipping`);
+        continue;
+      }
+      const expectedTypes = [...new Set(answers.map((entity) => entity.type))];
+      await q(
+        `insert into prompt (id, kind, text, scope, pack, family_friendly, version, meta)
+         values ($1,$2,$3,$4,'world_history',true,$5,$6::jsonb)`,
+        [
+          prompt.id,
+          prompt.kind ?? "anthill",
+          prompt.text,
+          prompt.scope,
+          CONTENT_VERSION,
+          JSON.stringify({
+            scopeNoun: prompt.scopeNoun,
+            expectedTypes,
+            rejectTypes: {},
+            answerCount: answers.length,
+            pack: "world_history",
+          }),
+        ],
+      );
+      for (let index = 0; index < answers.length; index += 1) {
+        await q(
+          "insert into prompt_answer (prompt_id, entity_id, rarity) values ($1,$2,$3)",
+          [prompt.id, answers[index].id, assignRarity(answers.length, index)],
+        );
+        promptAnswerCount += 1;
+      }
+      console.log(`[seed] ${prompt.id.padEnd(34)} ${answers.length} answers`);
+    }
+
+    for (const prompt of WORDPLAY_PROMPTS) {
+      const answers = prompt.answers
+        .map((name) => wordplayEntity.get(normalizeKey(name)))
+        .filter(Boolean) as SeedEntity[];
+      if (answers.length < 8) {
+        console.warn(`[seed] wordplay prompt ${prompt.id} has only ${answers.length} answers; skipping`);
+        continue;
+      }
+      await q(
+        `insert into prompt (id, kind, text, scope, pack, family_friendly, version, meta)
+         values ($1,'anthill',$2,$3,'wordplay',true,$4,$5::jsonb)`,
+        [
+          prompt.id,
+          prompt.text,
+          prompt.scope,
+          CONTENT_VERSION,
+          JSON.stringify({
+            scopeNoun: prompt.scopeNoun,
+            expectedTypes: ["wordplay_answer"],
+            rejectTypes: {},
+            answerCount: answers.length,
+            pack: "wordplay",
           }),
         ],
       );
@@ -276,7 +445,7 @@ async function main() {
 
     const counts = await q<{ n: number }>("select count(*)::int as n from entity");
     console.log(
-      `[seed] entities=${counts[0]?.n} prompts=${PROMPTS.length} answers=${promptAnswerCount} hopper=${HOPPER_QUESTIONS.length} edges=${GRAPH_EDGES.length} puzzles=${PUZZLES.length}`,
+      `[seed] entities=${counts[0]?.n} prompts=${PROMPTS.length + HISTORY_PROMPTS.length + WORDPLAY_PROMPTS.length} answers=${promptAnswerCount} hopper=${HOPPER_QUESTIONS.length} edges=${GRAPH_EDGES.length} puzzles=${PUZZLES.length}`,
     );
     console.log(`[seed] continents: ${Object.values(CONTINENT_LABELS).join(", ")}`);
   });

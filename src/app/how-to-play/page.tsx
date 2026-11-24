@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { MODE_ORDER, MODES, PLACEMENT_POINTS, RARITIES } from "@/lib/config";
+import { MODE_ORDER, MODES, PLACEMENT_POINTS, RARITIES, TOPIC_PACKS } from "@/lib/config";
 import { ModeMark } from "@/components/Creatures";
+import { PackIcon } from "@/components/ColonyWorld";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
 export const metadata: Metadata = { title: "How to play" };
@@ -63,6 +64,27 @@ export default function HowToPlayPage() {
                   </ul>
                 </div>
               </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="stack">
+          <div className="section-head">
+            <div>
+              <p className="eyebrow">Topic packs</p>
+              <h2>Pick a tunnel.</h2>
+            </div>
+            <p className="section-note">
+              The host can mix up to four packs in the lobby. World History is the headline bank,
+              with 50+ verified prompts.
+            </p>
+          </div>
+          <div className="topic-showcase">
+            {TOPIC_PACKS.map((pack) => (
+              <span key={pack.id} className="topic-showcase-item">
+                <PackIcon icon={pack.icon} size={20} />
+                {pack.name}
+              </span>
             ))}
           </div>
         </section>

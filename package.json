@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
+    "vercel-build": "node --import tsx scripts/seed.ts --if-needed && next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx scripts/migrate.ts",

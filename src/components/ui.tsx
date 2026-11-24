@@ -40,7 +40,9 @@ export function useServerClock(offset: number) {
   const [now, setNow] = useState(() => Date.now() + offset);
   useEffect(() => {
     setNow(Date.now() + offset);
-    const timer = window.setInterval(() => setNow(Date.now() + offset), 100);
+    // Four visual updates a second is enough for second-level timers and keeps
+    // the main thread free while answers and effects render.
+    const timer = window.setInterval(() => setNow(Date.now() + offset), 250);
     return () => window.clearInterval(timer);
   }, [offset]);
   return now;
@@ -84,7 +86,7 @@ export function Timer({
       >
         <div
           className={`timer-fill${urgent ? " urgent" : ""}`}
-          style={{ width: `${percent}%` }}
+          style={{ transform: `scaleX(${percent / 100})` }}
         />
       </div>
       {!compact && urgent ? <span className="tiny muted">Hurry</span> : null}

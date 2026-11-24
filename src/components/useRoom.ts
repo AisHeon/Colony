@@ -15,18 +15,22 @@ export type IntentBody =
   | { type: "spider:draft"; nodes: string[] }
   | { type: "party:voteFavorite"; mode: string };
 
-export type IntentAck = { ok: boolean; code: string; message: string; tone: "ok" | "warn" | "error" };
-
-function pollDelay(snapshot: Snapshot | null): number {
-  if (!snapshot) return 1500;
-  if (!snapshot.match) return 2200;
-  if (snapshot.match.status === "voting") return 700;
-  if (!snapshot.round) return 1500;
-  if (snapshot.round.phase === "countdown") return 350;
-  if (snapshot.round.phase === "results") return 900;
-  if (snapshot.round.mode === "beehive") return 550;
-  return 800;
-}
+export type IntentAck = {
+  ok: boolean;
+  code: string;
+  message: string;
+  tone: "ok" | "warn" | "error";
+  details?: {
+    entityId?: string;
+    name?: string;
+    rarity?: string;
+    rarityName?: string;
+    base?: number;
+    contribution?: number;
+    shared?: boolean;
+    sharers?: number;
+  };
+};
 
 export function useRoom(code: string) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -39,6 +43,7 @@ export function useRoom(code: string) {
   const aliveRef = useRef(true);
   const timerRef = useRef<number | null>(null);
   const snapshotRef = useRef<Snapshot | null>(null);
+  const inFlightRef = useRef(0);
   const [offset, setOffset] = useState(0);
 
   const apply = useCallback((next: Snapshot) => {
@@ -87,25 +92,89 @@ export function useRoom(code: string) {
   }, [refresh]);
 
   useEffect(() => {
-    let cancelled = false;
-    const loop = async () => {
-      if (cancelled) return;
-      await refresh();
-      if (cancelled) return;
-      const hidden = document.visibilityState === "hidden";
-      const delay = pollDelay(snapshotRef.current) * (hidden ? 3 : 1);
-      timerRef.current = window.setTimeout(loop, delay);
+    let stopped = false;
+    let source: EventSource | null = null;
+    let retry: number | null = null;
+    let fallback: number | null = null;
+
+    const startFallback = () => {
+      if (fallback || stopped) return;
+      fallback = window.setInterval(() => void refresh(), 2000);
     };
-    timerRef.current = window.setTimeout(loop, pollDelay(snapshotRef.current));
+
+    const connect = () => {
+      if (stopped) return;
+      if (typeof EventSource === "undefined") {
+        startFallback();
+        return;
+      }
+      try {
+        source = new EventSource(`/api/rooms/${code}/stream`);
+      } catch {
+        setConnected(false);
+        startFallback();
+        return;
+      }
+      source.addEventListener("open", () => {
+        if (stopped) return;
+        setConnected(true);
+      });
+      source.addEventListener("snapshot", (event) => {
+        if (stopped) return;
+        try {
+          const payload = JSON.parse((event as MessageEvent).data) as { snapshot?: Snapshot };
+          if (payload.snapshot) {
+            apply(payload.snapshot);
+            setConnected(true);
+            setLoading(false);
+          }
+        } catch {
+          /* ignore a malformed frame; the next one will repair the view */
+        }
+      });
+      source.addEventListener("gone", (event) => {
+        if (stopped) return;
+        source?.close();
+        source = null;
+        setConnected(false);
+        try {
+          const payload = JSON.parse((event as MessageEvent).data) as { message?: string };
+          setError({ code: "ROOM_NOT_FOUND", message: payload.message ?? "That room has closed." });
+        } catch {
+          setError({ code: "ROOM_NOT_FOUND", message: "That room has closed." });
+        }
+      });
+      source.addEventListener("error", () => {
+        if (stopped) return;
+        setConnected(false);
+        // EventSource reconnects by itself. If it has given up, rebuild it.
+        if (source?.readyState === EventSource.CLOSED) {
+          source = null;
+          retry = window.setTimeout(connect, 1800);
+        }
+      });
+    };
+
+    connect();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
-      cancelled = true;
-      if (timerRef.current) window.clearTimeout(timerRef.current);
+      stopped = true;
+      source?.close();
+      if (retry) window.clearTimeout(retry);
+      if (fallback) window.clearInterval(fallback);
+      document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [refresh]);
+  }, [apply, code, refresh]);
 
   const send = useCallback(
     async (intent: IntentBody): Promise<IntentAck | null> => {
-      if (pending) return null;
+      // Answers can be submitted while another answer is in flight. The server
+      // serialises writes; the client must never make the player wait.
+      inFlightRef.current += 1;
       setPending(true);
       const requestId =
         typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -133,10 +202,11 @@ export function useRoom(code: string) {
         setToast({ message: "Couldn't reach the server. Reconnecting…", tone: "error" });
         return null;
       } finally {
-        setPending(false);
+        inFlightRef.current = Math.max(0, inFlightRef.current - 1);
+        setPending(inFlightRef.current > 0);
       }
     },
-    [apply, code, pending],
+    [apply, code],
   );
 
   useEffect(() => {

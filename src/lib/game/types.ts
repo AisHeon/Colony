@@ -5,6 +5,17 @@ export type IntentResult = {
   code: string;
   message: string;
   tone: "ok" | "warn" | "error";
+  /** Structured verdict data so the client can render before the next snapshot. */
+  details?: {
+    entityId?: string;
+    name?: string;
+    rarity?: string;
+    rarityName?: string;
+    base?: number;
+    contribution?: number;
+    shared?: boolean;
+    sharers?: number;
+  };
 };
 
 export type PublicMember = {

@@ -101,15 +101,7 @@ export function HomeEntry() {
   }
 
   return (
-    <div className="card entry-card">
-      <div className="entry-head">
-        <div>
-          <span className="ticket-kicker">Start here</span>
-          <h2>Claim a seat.</h2>
-        </div>
-        <span className="ticket-mark">no account</span>
-      </div>
-
+    <div className="entry-card">
       <div className="entry-tabs" role="tablist" aria-label="Create or join">
         <button
           type="button"
@@ -132,7 +124,7 @@ export function HomeEntry() {
       </div>
 
       <label className="field">
-        <span className="label">Nickname</span>
+        <span className="label">Your bug name</span>
         <input
           className="input"
           value={nickname}
@@ -143,29 +135,15 @@ export function HomeEntry() {
           autoCapitalize="words"
           spellCheck={false}
         />
-        <span className="hint">
-          Shown in your room. 2–16 characters.{" "}
-          <Link href="/privacy">Privacy note</Link>.
-        </span>
       </label>
 
       {tab === "create" ? (
         <form className="stack-sm" onSubmit={createRoom}>
-          <div className="entry-callout">
-            <strong>Party room.</strong> Eight slots, all four games, one favourite-mode vote at the
-            end. You can change the mode and rounds in the lobby.
-          </div>
-          {error ? (
-            <p className="error-text" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={busy}>
-            {busy ? "Opening the room…" : "Create a room"}
+          <button className="btn btn-primary btn-block btn-lg entry-go" type="submit" disabled={busy}>
+            {busy ? "Opening the tunnel…" : "Create a room"}
           </button>
           <p className="hint">
-            Want a specific game or fewer rounds?{" "}
-            <Link href="/create">Set it up first</Link>.
+            Party mix by default. Change modes and topics once you&apos;re in the lobby.
           </p>
         </form>
       ) : (
@@ -183,18 +161,23 @@ export function HomeEntry() {
               spellCheck={false}
               inputMode="text"
             />
-            <span className="hint">Paste an invite link too — we only read the code.</span>
           </label>
-          {error ? (
-            <p className="error-text" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={busy}>
-            {busy ? "Joining…" : "Join the room"}
+          <button className="btn btn-primary btn-block btn-lg entry-go" type="submit" disabled={busy}>
+            {busy ? "Following the trail…" : "Join the colony"}
           </button>
         </form>
       )}
+
+      {error ? (
+        <p className="error-text" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      <p className="entry-legal">
+        Nickname only. No account. By playing you agree to the{" "}
+        <Link href="/terms">terms</Link> and <Link href="/privacy">privacy note</Link>.
+      </p>
     </div>
   );
 }

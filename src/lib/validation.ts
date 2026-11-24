@@ -111,6 +111,11 @@ export const TYPE_LABELS: Record<string, string> = {
   fictional_place: "fictional place",
   fictional_object: "fictional object",
   country_group: "group of countries",
+  history_person: "historical person",
+  history_event: "historical event",
+  history_place: "historical place",
+  history_work: "historical document",
+  wordplay_answer: "wordplay answer",
 };
 
 export function typeLabel(type: string): string {

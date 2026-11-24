@@ -433,7 +433,22 @@ async function submitAnthill(
 
   await record(result.code, message, result.entityId);
   void intent;
-  return { ok: true, code: result.code, message, tone: "ok" };
+  return {
+    ok: true,
+    code: result.code,
+    message,
+    tone: "ok",
+    details: {
+      entityId: result.entityId,
+      name: result.name,
+      rarity: result.rarity,
+      rarityName: RARITIES[result.rarity].name,
+      base,
+      contribution,
+      shared: sharerCount >= 2,
+      sharers: sharerCount,
+    },
+  };
 }
 
 async function submitBeehive(
@@ -505,7 +520,7 @@ async function submitBeehive(
   if (beehive.used.length >= bundle.answerCount - beehive.living.length) {
     const replacement = await pickPrompt(q, {
       kind: "beehive",
-      packs: ["core"],
+      packs: ["all"],
       familyFriendly: true,
       excludeIds: [beehive.promptId],
       minAnswers: 80,

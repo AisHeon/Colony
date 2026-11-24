@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LIMITS, MODE_ORDER, MODES, PLAYABLE_MODES, type ModeId, type RoomSettings } from "@/lib/config";
 import { ModeMark } from "./Creatures";
+import { TopicPicker } from "./TopicPacks";
 
 export function RoomSettingsForm({
   initial,
@@ -99,6 +100,12 @@ export function RoomSettingsForm({
         <p className="hint">{mode.rule}</p>
       )}
 
+      <div className="field">
+        <span className="label">Topics</span>
+        <TopicPicker value={settings.packs} onChange={(packs) => update("packs", packs)} />
+        <span className="hint">Pick up to four. World History has its own 50+ prompt bank.</span>
+      </div>
+
       {settings.mode === "spider" || settings.mode === "party" ? (
         <label className="field">
           <span className="label">Spider Web duration</span>
@@ -153,8 +160,8 @@ export function RoomSettingsForm({
             </span>
           </label>
           <p className="hint">
-            Content pack: <strong>Core</strong> — {MODE_ORDER.length} modes, verified answer lists and
-            sourced Spider Web facts.
+            {MODE_ORDER.length} modes, verified answer lists and sourced Spider Web facts. No
+            generated facts are ever used as answers.
           </p>
         </div>
       ) : null}

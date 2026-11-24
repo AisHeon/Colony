@@ -7,6 +7,7 @@ import {
   MODES,
   PLAYABLE_MODES,
   TIMERS,
+  TOPIC_PACKS,
   type ModeId,
   type PlayableMode,
   type RoomSettings,
@@ -167,10 +168,18 @@ export function normalizeSettings(input: Partial<RoomSettings> | undefined): Roo
     rounds,
     maxPlayers,
     familyFriendly: input?.familyFriendly !== false,
-    packs: Array.isArray(input?.packs) && input.packs.length ? input.packs.slice(0, 4) : ["core"],
+    packs: normalizePacks(input?.packs),
     spiderSeconds,
     hopperSeconds,
   };
+}
+
+function normalizePacks(input: unknown): string[] {
+  const known = new Set(TOPIC_PACKS.map((pack) => pack.id as string));
+  if (!Array.isArray(input)) return ["all"];
+  const packs = [...new Set(input.map(String).filter((id) => known.has(id)))].slice(0, 4);
+  if (!packs.length) return ["all"];
+  return packs.includes("all") ? ["all"] : packs;
 }
 
 function clampInt(value: unknown, min: number, max: number, fallback: number): number {
@@ -522,13 +531,25 @@ export async function createRound(q: QueryFn, match: MatchRow, index: number, no
   let extraState: RoundState = {};
 
   if (mode === "anthill" || mode === "beehive") {
-    const bundle = await pickPrompt(q, {
+    const selected = match.config.packs?.length ? match.config.packs : ["all"];
+    let bundle = await pickPrompt(q, {
       kind: mode,
-      packs: match.config.packs,
+      packs: selected,
       familyFriendly: match.config.familyFriendly,
       excludeIds: runtime.usedPrompts,
-      minAnswers: mode === "beehive" ? 80 : 12,
+      minAnswers: mode === "beehive" ? 80 : 8,
     });
+    // A narrow topic may not cover every mode. Never strand a room at start:
+    // fall back to the full verified bank instead of showing a dead screen.
+    if (!bundle && !selected.includes("all")) {
+      bundle = await pickPrompt(q, {
+        kind: mode,
+        packs: ["all"],
+        familyFriendly: match.config.familyFriendly,
+        excludeIds: runtime.usedPrompts,
+        minAnswers: mode === "beehive" ? 80 : 8,
+      });
+    }
     if (!bundle) throw new GameError("CONTENT_MISSING", "No prompts are available for that mode.", 503);
     runtime.usedPrompts = [...runtime.usedPrompts, bundle.prompt.id];
     prompt = {

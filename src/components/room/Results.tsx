@@ -6,9 +6,17 @@ import { MODES } from "@/lib/config";
 import type { Snapshot, SpiderPathView } from "@/lib/game/types";
 import { formatScore, ordinal } from "@/lib/scoring";
 import { Avatar, Score, Timer, useServerClock } from "@/components/ui";
+import { AntAvatar, CasteBadge, SoilGauge } from "@/components/ColonyWorld";
 import type { IntentAck, IntentBody } from "@/components/useRoom";
 
 type Send = (intent: IntentBody) => Promise<IntentAck | null>;
+
+function placementCaste(place: number): string {
+  if (place === 1) return "queen";
+  if (place === 2) return "royal";
+  if (place === 3) return "soldier";
+  return "forager";
+}
 
 type Reveal = {
   ranking?: Array<{ rank: number; canonical: string; score: number; players: string[] }>;
@@ -150,6 +158,7 @@ export function RoundResults({
             {results.podium.map((row) => (
               <div key={row.memberId} className={`podium-row${row.placement === 1 ? " first" : ""}`}>
                 <span className="place">{row.placement ? ordinal(row.placement) : "—"}</span>
+                {row.placement ? <CasteBadge rarity={placementCaste(row.placement)} size={18} /> : null}
                 <span className="row-tight">
                   <MemberName snapshot={snapshot} id={row.memberId} />
                   <span className="tiny muted">· {row.detail}</span>
@@ -383,8 +392,9 @@ export function FinalResults({
               return (
                 <div key={member.id} className={`podium-row${place === 1 ? " first" : ""}`}>
                   <span className="place">{max > 0 ? ordinal(place) : "—"}</span>
+                  {max > 0 ? <CasteBadge rarity={placementCaste(place)} size={20} /> : null}
                   <span className="row-tight">
-                    <Avatar name={member.nickname} index={member.avatar} size="sm" />
+                    <AntAvatar name={member.nickname} index={member.avatar} size={30} />
                     <span className="strong">{member.nickname}</span>
                     {member.isHost ? <span className="badge">host</span> : null}
                   </span>
@@ -457,12 +467,15 @@ export function FinalResults({
         </section>
       </div>
 
-      <aside className="card card-tight stack-sm">
-        <h3>Room</h3>
-        <p className="room-code">{snapshot.room.code}</p>
-        <p className="hint">
-          Rematches keep the room, identities and settings. Points, answers and votes reset.
-        </p>
+      <aside className="stack">
+        <SoilGauge score={max} label="Winning depth" />
+        <div className="card card-tight stack-sm">
+          <h3>Room</h3>
+          <p className="room-code">{snapshot.room.code}</p>
+          <p className="hint">
+            Rematches keep the room, identities and settings. Points, answers and votes reset.
+          </p>
+        </div>
       </aside>
     </div>
   );

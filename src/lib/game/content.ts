@@ -110,7 +110,7 @@ export async function pickPrompt(
        from prompt p
       where p.kind = $1
         and p.family_friendly = $2
-        and p.pack = any($3::text[])
+        and (p.pack = any($3::text[]) or 'all' = any($3::text[]))
         and not (p.id = any($4::text[]))
       order by random()
       limit 24`,
