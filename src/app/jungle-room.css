@@ -396,3 +396,77 @@
     animation: none;
   }
 }
+
+/* ------------------------------------------------- leftovers from the cave */
+
+.jungle-room .site-footer {
+  background: rgba(7, 28, 6, 0.82);
+  border-top-color: var(--border);
+}
+
+.jungle-room .footer-fine,
+.jungle-room .footer-columns a,
+.jungle-room .footer-brand p {
+  color: var(--muted);
+}
+
+.jungle-room .soil-gauge {
+  background: rgba(8, 34, 7, 0.55);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.jungle-room .soil-gauge-label {
+  color: var(--muted);
+}
+
+.jungle-room .soil-gauge-score,
+.jungle-room .soil-gauge-layer {
+  color: var(--accent);
+}
+
+.jungle-room .soil-track {
+  background:
+    repeating-linear-gradient(180deg, rgba(168, 224, 99, 0.07) 0 1px, transparent 1px 32px),
+    linear-gradient(180deg, #123f10 0%, #071f06 100%);
+  border-color: var(--border);
+  border-radius: 10px;
+}
+
+.jungle-room .soil-track::before {
+  background: radial-gradient(ellipse at 50% 30%, transparent 20%, rgba(3, 14, 2, 0.55) 100%);
+}
+
+.jungle-room .soil-layer {
+  color: #7fa170;
+}
+
+.jungle-room .soil-layer.reached {
+  color: var(--ink);
+}
+
+.jungle-room .soil-bug {
+  color: var(--accent);
+}
+
+.jungle-room .pack-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(8, 34, 7, 0.5);
+  color: var(--ink);
+}
+
+.jungle-room .pack-chip:hover:not(.is-active) {
+  background: rgba(30, 91, 25, 0.6);
+}
+
+.jungle-room .pack-chip.is-active {
+  border-color: var(--accent);
+  background: rgba(168, 224, 99, 0.16);
+  color: var(--accent);
+}
+
+.jungle-room .pack-chip svg {
+  color: var(--accent);
+}
