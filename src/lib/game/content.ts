@@ -55,7 +55,42 @@ export async function getGlobalEntities(q: QueryFn): Promise<GlobalCache> {
   return value;
 }
 
+const promptCache = new Map<string, PromptBundle>();
+const promptInflight = new Map<string, Promise<PromptBundle | null>>();
+
+/**
+ * Prompt answer lists are immutable content, but they used to be rebuilt on every
+ * submitted answer. Cache the built index per content version so a verdict only
+ * costs the write queries.
+ */
 export async function loadPromptBundle(q: QueryFn, promptId: string): Promise<PromptBundle | null> {
+  const key = `${CONTENT_VERSION}:${promptId}`;
+  const cached = promptCache.get(key);
+  if (cached) return cached;
+  const pending = promptInflight.get(key);
+  if (pending) return pending;
+
+  const task = buildPromptBundle(q, promptId)
+    .then((bundle) => {
+      if (bundle) {
+        if (promptCache.size >= 120) promptCache.clear();
+        promptCache.set(key, bundle);
+      }
+      return bundle;
+    })
+    .finally(() => {
+      promptInflight.delete(key);
+    });
+  promptInflight.set(key, task);
+  return task;
+}
+
+/** Warms an active prompt's answer index before the first keystroke. */
+export function primePromptBundle(q: QueryFn, promptId: string): void {
+  void loadPromptBundle(q, promptId).catch(() => undefined);
+}
+
+async function buildPromptBundle(q: QueryFn, promptId: string): Promise<PromptBundle | null> {
   const promptRow = await q<Row>("select * from prompt where id = $1", [promptId]);
   const prompt = promptRow[0] as unknown as PromptRow | undefined;
   if (!prompt) return null;
@@ -156,6 +191,39 @@ export async function pickHopperQuestion(
 }
 
 export async function loadHopperQuestion(
+  q: QueryFn,
+  id: string,
+): Promise<{ question: HopperQuestionRow; buckets: HopperBucket[]; index: AnswerIndex } | null> {
+  const cached = hopperCache.get(id);
+  if (cached) return cached;
+  const pending = hopperInflight.get(id);
+  if (pending) return pending;
+
+  const task = buildHopperQuestion(q, id)
+    .then((value) => {
+      if (value) {
+        if (hopperCache.size >= 120) hopperCache.clear();
+        hopperCache.set(id, value);
+      }
+      return value;
+    })
+    .finally(() => {
+      hopperInflight.delete(id);
+    });
+  hopperInflight.set(id, task);
+  return task;
+}
+
+const hopperCache = new Map<
+  string,
+  { question: HopperQuestionRow; buckets: HopperBucket[]; index: AnswerIndex }
+>();
+const hopperInflight = new Map<
+  string,
+  Promise<{ question: HopperQuestionRow; buckets: HopperBucket[]; index: AnswerIndex } | null>
+>();
+
+async function buildHopperQuestion(
   q: QueryFn,
   id: string,
 ): Promise<{ question: HopperQuestionRow; buckets: HopperBucket[]; index: AnswerIndex } | null> {
@@ -271,4 +339,6 @@ export async function searchEntities(
 export function resetContentCaches() {
   globalCache.clear();
   graphCache.clear();
+  promptCache.clear();
+  hopperCache.clear();
 }

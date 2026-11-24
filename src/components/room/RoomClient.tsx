@@ -16,9 +16,9 @@ import { FinalResults } from "./Results";
 
 type Sound = "accepted" | "rejected" | "turn" | "end";
 
-export function RoomClient({ code }: { code: string }) {
+export function RoomClient({ code, initial }: { code: string; initial: Snapshot | null }) {
   const router = useRouter();
-  const { snapshot, error, loading, connected, pending, toast, offset, send, refresh } = useRoom(code);
+  const { snapshot, error, loading, connected, pending, toast, offset, send, refresh } = useRoom(code, initial);
   const [sound, setSound] = useState(false);
   const audioRef = useRef<AudioContext | null>(null);
   const lastFeedbackRef = useRef<number>(0);

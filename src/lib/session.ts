@@ -13,16 +13,27 @@ export type Guest = { id: string; token?: string };
  * Sessions are opaque server-issued tokens; the cookie is HttpOnly and the
  * database only stores a SHA-256 hash.
  */
+/**
+ * Guest sessions never change once created, so a short in-process cache removes
+ * a database round trip from every room request.
+ */
+const guestCache = new Map<string, { id: string; expiresAt: number }>();
+const GUEST_CACHE_MS = 60_000;
+
 export async function readGuest(): Promise<Guest | null> {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
+  const tokenHash = hashToken(token);
+  const cached = guestCache.get(tokenHash);
+  if (cached && cached.expiresAt > Date.now()) return { id: cached.id, token };
+
   const db = await getDb();
-  const row = await db.one<{ id: string }>(
-    "select id from guest_session where token_hash = $1",
-    [hashToken(token)],
-  );
-  return row ? { id: row.id, token } : null;
+  const row = await db.one<{ id: string }>("select id from guest_session where token_hash = $1", [tokenHash]);
+  if (!row) return null;
+  if (guestCache.size > 5000) guestCache.clear();
+  guestCache.set(tokenHash, { id: row.id, expiresAt: Date.now() + GUEST_CACHE_MS });
+  return { id: row.id, token };
 }
 
 export async function ensureGuest(): Promise<{ guest: Guest; isNew: boolean }> {

@@ -649,21 +649,42 @@ function shuffleWithCrypto<T>(items: T[]): T[] {
 // Tick: advance phases, settle rounds, migrate host, expire rooms
 // ---------------------------------------------------------------------------
 
-export async function advanceRoom(db: Db, code: string, now = Date.now()): Promise<void> {
-  await db.transaction(async (q) => {
-    let room: RoomRow;
-    try {
-      room = await loadRoomForUpdate(q, code);
-    } catch {
-      return;
+/**
+ * Advances the room clock in one transaction and returns the room's state
+ * version. Callers use the version to skip rebuilding a snapshot when nothing
+ * changed, and can refresh presence in the same round trip.
+ */
+export async function advanceRoom(
+  db: Db,
+  code: string,
+  now = Date.now(),
+  touchGuestId?: string,
+): Promise<number | null> {
+  return db.transaction(async (q) => {
+    const found = await q<Row>("select * from room where code = $1 for update", [code]);
+    const room = found[0] as unknown as RoomRow | undefined;
+    if (!room) return null;
+    if (room.status !== "closed" && touchGuestId) {
+      await q(
+        `update room_member set last_seen_at = $3::double precision
+          where room_id = $1 and guest_id = $2 and left_at is null
+            and last_seen_at < $3::double precision - 4000`,
+        [room.id, touchGuestId, now],
+      );
     }
-    await tickRoom(q, room, now);
+    if (room.status !== "closed") await tickRoom(q, room, now);
+    const rows = await q<Row>("select state_version from room where id = $1", [room.id]);
+    return Number(rows[0]?.state_version ?? room.state_version);
   });
 }
 
 export async function tickRoom(q: QueryFn, room: RoomRow, now: number): Promise<void> {
-  await migrateHostIfNeeded(q, room, now);
-  await expireIfIdle(q, room, now);
+  // One member read serves both host migration and idle expiry. The tick runs on
+  // every poll and every intent, so a duplicate load is pure latency on a
+  // remote database.
+  const members = await loadMembers(q, room.id);
+  await migrateHostIfNeeded(q, room, now, members);
+  await expireIfIdle(q, room, now, members);
 
   const match = await currentMatch(q, room.id);
   if (!match) {
@@ -680,35 +701,36 @@ export async function tickRoom(q: QueryFn, room: RoomRow, now: number): Promise<
 
   if (match.status !== "active") return;
 
-  const rounds = await matchRounds(q, match.id);
+  let rounds = await matchRounds(q, match.id);
   let roundsDone = rounds.filter((r) => r.finalized_at).length;
   let guard = 0;
 
   while (guard < 40) {
     guard += 1;
-    const roundsNow = await matchRounds(q, match.id);
-    const round = roundsNow.find((r) => !r.finalized_at);
+    const round = rounds.find((r) => !r.finalized_at);
     if (!round) {
       // A finalized round stays in `results` until its results window has
       // elapsed. That round is intentionally excluded from `activeRound`, so
       // advancing has to look at the latest finalized round explicitly.
-      const latest = roundsNow[roundsNow.length - 1];
+      const latest = rounds[rounds.length - 1];
       if (!latest || latest.phase !== "results") return;
       const resultsAt = latest.results_at ?? (latest.finalized_at ?? now) + TIMERS.resultsMs;
       if (now < resultsAt) return;
       const nextIndex = latest.idx + 1;
       if (nextIndex < match.round_count) {
         await createRound(q, match, nextIndex, now);
+        rounds = await matchRounds(q, match.id);
         continue;
       }
       await finishMatch(q, match, now);
       return;
     }
-    roundsDone = roundsNow.filter((r) => r.finalized_at).length;
+    roundsDone = rounds.filter((r) => r.finalized_at).length;
 
     if (round.phase === "countdown") {
       if (now >= roundCountdownEndsAt(round)) {
         await activateRound(q, round, match, now);
+        rounds = await matchRounds(q, match.id);
         continue;
       }
       return;
@@ -717,10 +739,14 @@ export async function tickRoom(q: QueryFn, room: RoomRow, now: number): Promise<
     if (round.phase === "active") {
       if (round.mode === "beehive") {
         const finalized = await resolveBeehiveTimeouts(q, round, now);
-        if (finalized) continue;
+        if (finalized) {
+          rounds = await matchRounds(q, match.id);
+          continue;
+        }
       }
       if (now >= round.ends_at) {
         await finalizeRound(q, round, match, now);
+        rounds = await matchRounds(q, match.id);
         continue;
       }
       return;
@@ -736,6 +762,7 @@ export async function tickRoom(q: QueryFn, room: RoomRow, now: number): Promise<
           if (updated) await finishMatch(q, updated, now);
           return;
         }
+        rounds = await matchRounds(q, match.id);
         continue;
       }
       return;
@@ -1088,8 +1115,13 @@ async function finishVoting(q: QueryFn, match: MatchRow, now: number) {
 // Host migration and room expiry
 // ---------------------------------------------------------------------------
 
-export async function migrateHostIfNeeded(q: QueryFn, room: RoomRow, now: number) {
-  const members = await loadMembers(q, room.id);
+export async function migrateHostIfNeeded(
+  q: QueryFn,
+  room: RoomRow,
+  now: number,
+  loadedMembers?: MemberRow[],
+) {
+  const members = loadedMembers ?? (await loadMembers(q, room.id));
   const active = members.filter((m) => !m.left_at);
   const host = active.find((m) => m.id === room.host_member_id);
   if (host && !host.left_at && now - host.last_seen_at <= TIMERS.hostMigrationMs) return;
@@ -1107,9 +1139,8 @@ export async function migrateHostIfNeeded(q: QueryFn, room: RoomRow, now: number
   room.state_version += 1;
 }
 
-async function expireIfIdle(q: QueryFn, room: RoomRow, now: number) {
+async function expireIfIdle(q: QueryFn, room: RoomRow, now: number, members: MemberRow[]) {
   if (room.status === "closed") return;
-  const members = await loadMembers(q, room.id);
   const connected = members.filter((m) => isConnected(m, now));
   if (!connected.length) {
     const newest = members.reduce((max, m) => Math.max(max, m.last_seen_at, m.joined_at), 0);

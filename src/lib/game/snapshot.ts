@@ -11,7 +11,7 @@ import type {
   SpiderDraftView,
   SpiderPathView,
 } from "./types";
-import { loadGraph } from "./content";
+import { loadGraph, primePromptBundle } from "./content";
 import { findDirectEdge } from "./spider";
 
 type GraphNames = Map<string, string>;
@@ -35,27 +35,30 @@ export async function buildSnapshotForRoom(
 ): Promise<Snapshot> {
   const q: QueryFn = db.query;
 
-  const memberRows = await q<Row>(
-    "select * from room_member where room_id = $1 order by joined_at asc",
-    [room.id],
-  );
+  // Independent reads run together: on a hosted database every sequential query
+  // is another network round trip inside the player's answer.
+  const [memberRows, match, voteRows] = await Promise.all([
+    q<Row>("select * from room_member where room_id = $1 order by joined_at asc", [room.id]),
+    db.one<Row>("select * from match where room_id = $1 order by started_at desc limit 1", [room.id]),
+    q<Row>(
+      `select fv.* from favorite_vote fv join match m on m.id = fv.match_id
+        where m.id = (select id from match where room_id = $1 order by started_at desc limit 1)`,
+      [room.id],
+    ),
+  ]);
   const members = memberRows as unknown as MemberRow[];
   const viewer = guestId ? members.find((m) => m.guest_id === guestId && !m.left_at) ?? null : null;
-
-  const match = await db.one<Row>(
-    "select * from match where room_id = $1 order by started_at desc limit 1",
-    [room.id],
-  );
   const matchRow = (match as unknown as MatchRow) ?? null;
-  const rounds = matchRow
-    ? ((await q<Row>("select * from round where match_id = $1 order by idx asc", [matchRow.id])) as unknown as RoundRow[])
-    : [];
-  const placements = matchRow
-    ? await q<Row>(
-        `select rp.* from round_placement rp join round r on r.id = rp.round_id where r.match_id = $1`,
-        [matchRow.id],
-      )
-    : [];
+  const [roundRows, placements] = matchRow
+    ? await Promise.all([
+        q<Row>("select * from round where match_id = $1 order by idx asc", [matchRow.id]),
+        q<Row>(
+          `select rp.* from round_placement rp join round r on r.id = rp.round_id where r.match_id = $1`,
+          [matchRow.id],
+        ),
+      ])
+    : ([([] as Row[]), ([] as Row[])] as [Row[], Row[]]);
+  const rounds = roundRows as unknown as RoundRow[];
 
   const points: Record<string, number> = {};
   for (const row of placements) {
@@ -131,7 +134,6 @@ export async function buildSnapshotForRoom(
           matchPoints: Number(row.match_points),
         })),
     }));
-    const voteRows = await q<Row>("select * from favorite_vote where match_id = $1", [matchRow.id]);
     const voteOpen = matchRow.status === "voting" && !!matchRow.vote_ends_at && now < matchRow.vote_ends_at;
     const voteResult =
       matchRow.vote_result ??
@@ -181,6 +183,7 @@ export async function buildSnapshotForRoom(
       viewer,
       now,
       nicknameOf,
+      placementRows: placements.filter((row) => String(row.round_id) === displayRound.id),
     });
   }
 
@@ -218,8 +221,9 @@ async function buildRoundView(args: {
   viewer: MemberRow | null;
   now: number;
   nicknameOf: (id: string | null | undefined) => string;
+  placementRows: Row[];
 }): Promise<NonNullable<Snapshot["round"]>> {
-  const { q, round, members, viewer, now, nicknameOf, match } = args;
+  const { q, round, members, viewer, now, nicknameOf, match, placementRows } = args;
   const revealed = !!round.finalized_at;
 
   const view: NonNullable<Snapshot["round"]> = {
@@ -239,10 +243,12 @@ async function buildRoundView(args: {
     results: null,
   };
 
-  const placementRows = await q<Row>(
-    "select * from round_placement where round_id = $1",
-    [round.id],
-  );
+  // The answer index for the round is fixed content: warm it while the player is
+  // still reading the prompt so the first verdict does not pay for it.
+  if (!revealed && args.db.kind === "postgres" && (round.mode === "anthill" || round.mode === "beehive")) {
+    const promptId = round.prompt.promptId;
+    if (promptId) primePromptBundle(q, String(promptId));
+  }
 
   if (round.phase === "results") {
     view.results = await buildResults({

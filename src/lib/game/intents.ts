@@ -78,6 +78,22 @@ function feedback(code: string, message: string): IntentResult {
   return { ok: code.startsWith("ACCEPTED") || code === "SAVED" || code === "OK", code, message, tone: toneFor(code) };
 }
 
+/**
+ * The live stream already moves the room clock on. Ticking again inside every
+ * intent costs several extra queries against a remote database, so intents only
+ * tick a room that nobody has advanced in the last moment.
+ */
+const lastTickAt = new Map<string, number>();
+const TICK_INTERVAL_MS = 750;
+
+function needsTick(roomId: string, now: number): boolean {
+  const previous = lastTickAt.get(roomId) ?? 0;
+  if (now - previous < TICK_INTERVAL_MS) return false;
+  if (lastTickAt.size > 400) lastTickAt.clear();
+  lastTickAt.set(roomId, now);
+  return true;
+}
+
 async function findMember(q: QueryFn, roomId: string, guestId: string): Promise<MemberRow | null> {
   const rows = await q<Row>(
     `select * from room_member
@@ -104,8 +120,14 @@ export async function applyIntent(
   requestId: string,
   now = Date.now(),
 ): Promise<IntentResult> {
-  const cached = await db.one<Row>("select result from intent_receipt where request_id = $1", [requestId]);
-  if (cached?.result) return cached.result as IntentResult;
+  // Answers are idempotent on their own: the answer table's primary key and the
+  // request id on answer_attempt make a replay a no-op. Skipping the receipt here
+  // removes two round trips from the path a player waits on.
+  const receiptFree = intent.type === "answer:submit";
+  if (!receiptFree) {
+    const cached = await db.one<Row>("select result from intent_receipt where request_id = $1", [requestId]);
+    if (cached?.result) return cached.result as IntentResult;
+  }
 
   if (!guestId) throw new GameError("NOT_IN_ROOM", "Join this room first.", 403);
 
@@ -122,23 +144,39 @@ export async function applyIntent(
     return writeReceipt(db, requestId, String(roomRow.id), member?.id ?? null, intent.type, outcome, now);
   }
 
-  const result = await db.transaction(async (q) => {
+  return db.transaction(async (q) => {
     const room = await loadRoomForUpdate(q, code);
     const member = await findMember(q, room.id, guestId);
     if (!member) throw new GameError("NOT_IN_ROOM", "Your seat in this room has ended. Join again.", 403);
 
-    await q("update room_member set last_seen_at = $2 where id = $1", [member.id, now]);
-    await tickRoom(q, room, now);
+    // Presence is refreshed by the stream; skip the write when it is fresh.
+    if (now - member.last_seen_at > 4000) {
+      await q("update room_member set last_seen_at = $2 where id = $1", [member.id, now]);
+    }
+    if (needsTick(room.id, now)) await tickRoom(q, room, now);
 
     const handler = handlers[intent.type] as (ctx: unknown) => Promise<IntentResult>;
     const outcome = await handler({ q, room, member, intent, now, requestId });
 
-    await q("update room set last_activity_at = $2 where id = $1", [room.id, now]);
-    if (outcome.ok) await bumpVersion(q, room.id, now);
-    return { outcome, roomId: room.id, memberId: member.id };
+    // One write covers the activity stamp and the version bump that tells every
+    // connected stream to push the new state.
+    await q(
+      outcome.ok
+        ? "update room set state_version = state_version + 1, last_activity_at = $2 where id = $1"
+        : "update room set last_activity_at = $2 where id = $1",
+      [room.id, now],
+    );
+    // The idempotency receipt goes in with the change it records, so a retry
+    // never needs a second transaction.
+    if (!receiptFree) {
+      await q(
+        `insert into intent_receipt (request_id, room_id, member_id, type, result, created_at)
+         values ($1,$2,$3,$4,$5::jsonb,$6) on conflict (request_id) do nothing`,
+        [requestId, room.id, member.id, intent.type, JSON.stringify(outcome), now],
+      );
+    }
+    return outcome;
   });
-
-  return writeReceipt(db, requestId, result.roomId, result.memberId, intent.type, result.outcome, now);
 }
 
 async function writeReceipt(
@@ -397,35 +435,33 @@ async function submitAnthill(
     return feedback(result.code, result.message);
   }
 
-  const existing = await q<Row>(
-    "select 1 from anthill_answer where round_id = $1 and member_id = $2 and entity_id = $3",
-    [round.id, member.id, result.entityId],
+  const base = RARITIES[result.rarity].value;
+  // Accept, play stats and the shared-answer count in one statement: three fewer
+  // round trips on the hottest path. The primary key makes the insert idempotent.
+  const written = await q<Row>(
+    `with inserted as (
+       insert into anthill_answer (round_id, member_id, entity_id, base_value, rarity, created_at)
+       values ($1,$2,$3,$4,$5,$6)
+       on conflict (round_id, member_id, entity_id) do nothing
+       returning entity_id
+     ), stats as (
+       insert into answer_stats (prompt_id, entity_id, selections, exposures, updated_at)
+       select $7, entity_id, 1, 0, $6 from inserted
+       on conflict (prompt_id, entity_id) do update
+         set selections = answer_stats.selections + 1, updated_at = excluded.updated_at
+     )
+     select (select count(*) from inserted)::int as inserted,
+            ((select count(distinct member_id) from anthill_answer
+               where round_id = $1 and entity_id = $3) + (select count(*) from inserted))::int as sharers`,
+    [round.id, member.id, result.entityId, base, result.rarity, now, round.prompt.promptId],
   );
-  if (existing.length) {
+  if (Number(written[0]?.inserted ?? 0) === 0) {
     const message = `You already submitted ${result.name}.`;
     await record("ALREADY_SUBMITTED_BY_YOU", message, result.entityId);
     return feedback("ALREADY_SUBMITTED_BY_YOU", message);
   }
 
-  const base = RARITIES[result.rarity].value;
-  await q(
-    `insert into anthill_answer (round_id, member_id, entity_id, base_value, rarity, created_at)
-     values ($1,$2,$3,$4,$5,$6)`,
-    [round.id, member.id, result.entityId, base, result.rarity, now],
-  );
-  await q(
-    `insert into answer_stats (prompt_id, entity_id, selections, exposures, updated_at)
-     values ($1,$2,1,0,$3)
-     on conflict (prompt_id, entity_id) do update
-       set selections = answer_stats.selections + 1, updated_at = excluded.updated_at`,
-    [round.prompt.promptId, result.entityId, now],
-  );
-
-  const sharers = await q<Row>(
-    "select count(distinct member_id) as n from anthill_answer where round_id = $1 and entity_id = $2",
-    [round.id, result.entityId],
-  );
-  const sharerCount = Number(sharers[0]?.n ?? 1);
+  const sharerCount = Number(written[0]?.sharers ?? 1);
   const contribution = sharerCount >= 2 ? base / 2 : base;
   const shareNote =
     sharerCount >= 2 ? ` Shared answer: ${contribution} instead of ${base}. Fixed 50% reduction.` : "";

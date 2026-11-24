@@ -32,17 +32,18 @@ export type IntentAck = {
   };
 };
 
-export function useRoom(code: string) {
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+export function useRoom(code: string, initial: Snapshot | null = null) {
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(initial);
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initial);
   const [connected, setConnected] = useState(true);
   const [pending, setPending] = useState(false);
   const [toast, setToast] = useState<{ message: string; tone: string } | null>(null);
   const offsetRef = useRef(0);
   const aliveRef = useRef(true);
   const timerRef = useRef<number | null>(null);
-  const snapshotRef = useRef<Snapshot | null>(null);
+  const snapshotRef = useRef<Snapshot | null>(initial);
+  const seededRef = useRef<Snapshot | null>(initial);
   const inFlightRef = useRef(0);
   const [offset, setOffset] = useState(0);
 
@@ -83,8 +84,15 @@ export function useRoom(code: string) {
 
   useEffect(() => {
     aliveRef.current = true;
-    setLoading(true);
-    refresh();
+    const seeded = seededRef.current;
+    // A snapshot rendered by the server is fresh enough to paint from; the
+    // stream takes over on its next tick instead of a duplicate first fetch.
+    if (seeded && Date.now() - seeded.serverTime < 2000) {
+      setLoading(false);
+    } else {
+      setLoading(true);
+      void refresh();
+    }
     return () => {
       aliveRef.current = false;
       if (timerRef.current) window.clearTimeout(timerRef.current);

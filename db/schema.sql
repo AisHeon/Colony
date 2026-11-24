@@ -99,6 +99,7 @@ create table if not exists answer_attempt (
 );
 create unique index if not exists answer_attempt_request on answer_attempt (request_id);
 create index if not exists answer_attempt_round on answer_attempt (round_id, member_id);
+create index if not exists answer_attempt_member on answer_attempt (member_id, admitted_at);
 
 create table if not exists anthill_answer (
   round_id text not null references round(id) on delete cascade,
