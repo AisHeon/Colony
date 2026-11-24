@@ -23,26 +23,31 @@ export function rememberNickname(value: string) {
   }
 }
 
+type Busy = "join" | "create" | null;
+
 export function HomeEntry() {
-  const [tab, setTab] = useState<"create" | "join">("create");
   const [nickname, setNickname] = useState("");
   const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [familyFriendly, setFamilyFriendly] = useState(true);
+  const [quickMatch, setQuickMatch] = useState(false);
+  const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setNickname(readNickname());
   }, []);
 
-  async function createRoom(event: React.FormEvent) {
-    event.preventDefault();
+  const rounds = quickMatch ? 4 : MODES.party.defaultRounds;
+  const bugName = nickname.trim() || "Place Holder Bug";
+
+  async function createRoom() {
     setError(null);
     const name = nickname.trim();
     if (!name) {
-      setError("Choose a nickname first.");
+      setError("Choose a bug name first.");
       return;
     }
-    setBusy(true);
+    setBusy("create");
     rememberNickname(name);
     try {
       const res = await fetch("/api/rooms", {
@@ -50,19 +55,19 @@ export function HomeEntry() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           nickname: name,
-          settings: { mode: "party", rounds: MODES.party.defaultRounds },
+          settings: { mode: "party", rounds, familyFriendly },
         }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(body?.error?.message ?? "Couldn't create the room. Try again.");
+        setError(body?.error?.message ?? "Couldn't create the lobby. Try again.");
         return;
       }
       window.location.assign(`/room/${body.roomCode}`);
     } catch {
       setError("Couldn't connect. Check your connection and try again.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -72,14 +77,14 @@ export function HomeEntry() {
     const name = nickname.trim();
     const cleanCode = code.replace(/[\s-]/g, "").toUpperCase();
     if (!cleanCode) {
-      setError("Enter a room code.");
+      setError("Enter a lobby code.");
       return;
     }
     if (!name) {
-      setError("Choose a nickname first.");
+      setError("Choose a bug name first.");
       return;
     }
-    setBusy(true);
+    setBusy("join");
     rememberNickname(name);
     try {
       const res = await fetch(`/api/rooms/${cleanCode}/join`, {
@@ -89,95 +94,114 @@ export function HomeEntry() {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(body?.error?.message ?? "Couldn't join that room.");
+        setError(body?.error?.message ?? "Couldn't join that lobby.");
         return;
       }
       window.location.assign(`/room/${body.roomCode}`);
     } catch {
       setError("Couldn't connect. Check your connection and try again.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   return (
-    <div className="entry-card">
-      <div className="entry-tabs" role="tablist" aria-label="Create or join">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "create"}
-          className="entry-tab"
-          onClick={() => setTab("create")}
-        >
-          Create
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "join"}
-          className="entry-tab"
-          onClick={() => setTab("join")}
-        >
-          Join with code
-        </button>
+    <div className="lobby-frame">
+      <div className="lobby-bar">
+        <strong>Colony</strong>
+        <span>Private lobby</span>
+        <span className="lobby-bar-note">Nickname only · no account</span>
       </div>
 
-      <label className="field">
-        <span className="label">Your bug name</span>
-        <input
-          className="input"
-          value={nickname}
-          onChange={(event) => setNickname(event.target.value)}
-          maxLength={16}
-          placeholder="e.g. Pip"
-          autoComplete="nickname"
-          autoCapitalize="words"
-          spellCheck={false}
-        />
-      </label>
-
-      {tab === "create" ? (
-        <form className="stack-sm" onSubmit={createRoom}>
-          <button className="btn btn-primary btn-block btn-lg entry-go" type="submit" disabled={busy}>
-            {busy ? "Opening the tunnel…" : "Create a room"}
-          </button>
-          <p className="hint">
-            Party mix by default. Change modes and topics once you&apos;re in the lobby.
-          </p>
-        </form>
-      ) : (
-        <form className="stack-sm" onSubmit={joinRoom}>
-          <label className="field">
-            <span className="label">Room code</span>
+      <div className="lobby-frame-body">
+        <div className="lobby-bug">
+          <div className="lobby-bug-arch" aria-hidden="true">
+            <div className="lobby-bug-dome">
+              <span className="lobby-bug-label">{bugName}</span>
+            </div>
+          </div>
+          <label className="lobby-name-field">
+            <span>Name</span>
             <input
-              className="input input-code"
+              className="lobby-name-input"
+              value={nickname}
+              onChange={(event) => setNickname(event.target.value)}
+              maxLength={16}
+              placeholder="Chedward"
+              autoComplete="nickname"
+              autoCapitalize="words"
+              spellCheck={false}
+            />
+          </label>
+          <p className="lobby-bug-hint">This is the name the colony sees.</p>
+        </div>
+
+        <div className="lobby-panel">
+          <h2>Private Lobby</h2>
+
+          <form className="lobby-form" onSubmit={joinRoom}>
+            <label className="sr-only" htmlFor="lobby-code">
+              Lobby code
+            </label>
+            <input
+              id="lobby-code"
+              className="lobby-code"
               value={code}
               onChange={(event) => setCode(event.target.value.toUpperCase())}
-              placeholder="K7M4Q9"
+              placeholder="ABCDEF"
               maxLength={12}
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
-              inputMode="text"
             />
-          </label>
-          <button className="btn btn-primary btn-block btn-lg entry-go" type="submit" disabled={busy}>
-            {busy ? "Following the trail…" : "Join the colony"}
+            <button className="lobby-btn" type="submit" disabled={busy !== null}>
+              {busy === "join" ? "Joining…" : "Join"}
+            </button>
+          </form>
+
+          <h3>Create Lobby</h3>
+
+          <div className="lobby-toggles">
+            <label className="lobby-toggle">
+              <span>Family friendly</span>
+              <input
+                type="checkbox"
+                checked={familyFriendly}
+                onChange={(event) => setFamilyFriendly(event.target.checked)}
+              />
+              <span className="lobby-switch" aria-hidden="true" />
+            </label>
+            <label className="lobby-toggle">
+              <span>Quick match</span>
+              <input
+                type="checkbox"
+                checked={quickMatch}
+                onChange={(event) => setQuickMatch(event.target.checked)}
+              />
+              <span className="lobby-switch" aria-hidden="true" />
+            </label>
+          </div>
+
+          <button className="lobby-btn" type="button" onClick={createRoom} disabled={busy !== null}>
+            {busy === "create" ? "Opening…" : "Create"}
           </button>
-        </form>
-      )}
 
-      {error ? (
-        <p className="error-text" role="alert">
-          {error}
-        </p>
-      ) : null}
+          <p className="lobby-meta">
+            Party mix · {rounds} rounds · {familyFriendly ? "family friendly" : "standard"}
+          </p>
 
-      <p className="entry-legal">
-        Nickname only. No account. By playing you agree to the{" "}
-        <Link href="/terms">terms</Link> and <Link href="/privacy">privacy note</Link>.
-      </p>
+          {error ? (
+            <p className="lobby-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <p className="lobby-legal">
+            By playing you agree to the <Link href="/terms">terms</Link> and{" "}
+            <Link href="/privacy">privacy note</Link>.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

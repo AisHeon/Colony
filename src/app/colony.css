@@ -648,61 +648,7 @@ a:hover {
   font-size: 12px;
 }
 
-/* ------------------------------------------------------------------- home */
-.home-shell {
-  max-width: 1180px;
-}
-.home-main {
-  padding: clamp(12px, 3vw, 36px) 0 0;
-}
-.home-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
-  gap: clamp(24px, 5vw, 72px);
-  align-items: center;
-  min-height: 62vh;
-  padding: clamp(20px, 4vw, 52px) 0;
-}
-.home-hero-copy {
-  max-width: 720px;
-}
-.home-wordmark {
-  margin: 14px 0 16px;
-  font-family: var(--display);
-  font-size: clamp(64px, 13vw, 156px);
-  font-weight: 800;
-  line-height: 0.82;
-  letter-spacing: -0.06em;
-  color: var(--bone);
-  text-shadow: 5px 5px 0 #0b0704;
-  text-wrap: balance;
-}
-.home-line {
-  max-width: 560px;
-  color: var(--sand);
-  font-size: clamp(19px, 2.3vw, 27px);
-  line-height: 1.28;
-  font-weight: 500;
-}
-.home-note {
-  margin-top: 26px;
-  color: var(--muted);
-  font-size: 14px;
-}
-.home-note a {
-  margin-left: 8px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.home-pack-line {
-  margin-top: 8px;
-  color: var(--leaf);
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
+/* -------------------------------------------------------------- caste ribbon */
 .caste-ribbon {
   display: flex;
   flex-wrap: wrap;
@@ -742,64 +688,6 @@ a:hover {
 .caste-apex {
   color: var(--fungal);
   text-shadow: 0 0 8px rgba(168, 224, 99, 0.4);
-}
-.home-modes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 26px;
-  border-top: 1px solid var(--border);
-}
-.home-mode {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 13px;
-  border: 1px solid var(--border);
-  border-radius: 8px 6px 9px 6px;
-  background: rgba(43, 26, 14, 0.8);
-  color: var(--sand);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  transition: transform var(--fast), border-color var(--fast), color var(--fast);
-}
-.home-mode svg {
-  color: var(--mode-color, var(--leaf));
-}
-.home-mode:hover {
-  transform: translateY(-2px) rotate(-0.5deg);
-  border-color: var(--amber);
-  color: var(--bone);
-}
-.home-mode-anthill {
-  --mode-color: var(--leaf);
-}
-.home-mode-beehive {
-  --mode-color: var(--amber);
-}
-.home-mode-spider {
-  --mode-color: var(--dew);
-}
-.home-mode-hopper {
-  --mode-color: var(--fungal);
-}
-.home-mode-party {
-  --mode-color: var(--sand);
-}
-.home-mode-rule {
-  color: var(--muted);
-  font-size: 9px;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-.home-entry-panel {
-  width: 100%;
-  max-width: 420px;
-  justify-self: end;
 }
 
 /* ------------------------------------------------------------- entry card */
@@ -2244,15 +2132,6 @@ a:hover {
 
 /* ---------------------------------------------------------------- responsive */
 @media (max-width: 900px) {
-  .home-hero {
-    grid-template-columns: 1fr;
-    gap: 28px;
-    min-height: 0;
-  }
-  .home-entry-panel {
-    justify-self: stretch;
-    max-width: 540px;
-  }
   .game-grid,
   .anthill-grid {
     grid-template-columns: 1fr;
@@ -2301,28 +2180,12 @@ a:hover {
   .nav-link {
     font-size: 10px;
   }
-  .home-wordmark {
-    font-size: clamp(58px, 20vw, 104px);
-  }
-  .home-line {
-    font-size: 19px;
-  }
   .caste-ribbon {
     gap: 5px;
   }
   .caste-with-label {
     font-size: 8px;
     padding: 4px 7px;
-  }
-  .home-modes {
-    gap: 6px;
-  }
-  .home-mode {
-    font-size: 10px;
-    padding: 8px 9px;
-  }
-  .home-mode-rule {
-    display: none;
   }
   .entry-card {
     padding: 14px;
@@ -2427,8 +2290,7 @@ a:hover {
   .rare-wash {
     display: none !important;
   }
-  .btn:hover:not(:disabled),
-  .home-mode:hover {
+  .btn:hover:not(:disabled) {
     transform: none;
   }
 }
