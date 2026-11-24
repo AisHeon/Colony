@@ -14,23 +14,41 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request, ctx: { params: Promise<{ code: string }> }) {
+  const startedAt = performance.now();
+  let guestMs = 0;
+  let dbMs = 0;
   try {
     requireSameOrigin(request);
     const { code } = await ctx.params;
     const normalized = code.trim().toUpperCase();
     const body = bodySchema.parse(await request.json());
+
     const guest = await readGuest();
+    guestMs = performance.now() - startedAt;
     const db = await getDb();
+    dbMs = performance.now() - startedAt - guestMs;
+
     // `applyIntent` advances the room clock inside its own transaction, so a
     // separate tick here would only add latency.
     const result = await applyIntent(db, normalized, guest?.id ?? null, body.intent as never, body.requestId);
+    const intentMs = performance.now() - startedAt - guestMs - dbMs;
+
     // A verdict is complete on its own: the ack carries every number the player
     // sees and the room stream delivers the next snapshot. Rebuilding a snapshot
     // here doubled the answer's latency for nothing.
-    if (body.intent.type === "answer:submit") return ok({ result, snapshot: null });
-    const snapshot = await buildSnapshot(db, normalized, guest?.id ?? null);
-    return ok({ result, snapshot });
+    const snapshot =
+      body.intent.type === "answer:submit" ? null : await buildSnapshot(db, normalized, guest?.id ?? null);
+
+    const timing = [
+      `guest;dur=${guestMs.toFixed(0)}`,
+      `db;dur=${dbMs.toFixed(0)}`,
+      `intent;dur=${intentMs.toFixed(0)}`,
+      `total;dur=${(performance.now() - startedAt).toFixed(0)}`,
+    ].join(", ");
+    return ok({ result, snapshot }, { headers: { "server-timing": timing } });
   } catch (error) {
-    return fail(error);
+    const response = fail(error);
+    response.headers.set("server-timing", `total;dur=${(performance.now() - startedAt).toFixed(0)}`);
+    return response;
   }
 }
