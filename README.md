@@ -41,7 +41,7 @@ npm run db:migrate
 npm run db:seed
 ```
 
-For a hosted deployment, point `DATABASE_URL` at a pooled Postgres connection string, then run `npm run db:migrate && npm run db:seed` once against it. The app never creates tables at request time.
+For a hosted deployment, point `DATABASE_URL` at a pooled Postgres connection string. The first cold start applies `db/schema.sql` and seeds the audited catalog idempotently; the schema and seed helpers skip work when the database is already initialized.
 
 ## Tests and checks
 
@@ -111,11 +111,6 @@ The repository is a standard Next.js 15 app.
 For a large deployment or one that needs SQL analytics, attach Postgres instead:
 
 1. Add `DATABASE_URL` in Project → Settings → Environment Variables (Production and Preview).
-2. Run the migration and seed once against it:
-   ```bash
-   DATABASE_URL=... npm run db:migrate
-   DATABASE_URL=... npm run db:seed
-   ```
-3. Deploy. Postgres takes precedence over Blob when both are present.
+2. Deploy. Postgres takes precedence over Blob when both are present; the first request applies the schema and seeds the catalog if the database is empty.
 
 The shared Blob document is a single CAS-guarded JSON file. It is plenty for party-sized rooms, but every write is serialized; Postgres is the better choice for high concurrency.

@@ -227,7 +227,7 @@ export async function createSharedDb(store: StateStore): Promise<Db> {
 }
 
 async function createDb(): Promise<Db> {
-  const url = process.env.DATABASE_URL?.trim();
+  const url = (process.env.DATABASE_URL ?? process.env.POSTGRES_URL)?.trim();
 
   if (url) {
     const { Pool } = await import("pg");
@@ -241,7 +241,13 @@ async function createDb(): Promise<Db> {
     pool.on("error", (err) => {
       console.error("[colony] unexpected postgres pool error", err.message);
     });
-    return wrap(pool as unknown as PgPoolLike, "postgres");
+    const db = wrap(pool as unknown as PgPoolLike, "postgres");
+    // Hosted Postgres starts empty on a new Neon/Vercel database. These
+    // helpers are idempotent, so the first cold start can initialize the
+    // schema and audited content without a separate migration request.
+    await ensureSchema(db);
+    await ensureContent(db);
+    return db;
   }
 
   // Serverless shared state: content stays in memory, rooms are persisted in a
