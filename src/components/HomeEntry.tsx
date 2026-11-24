@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { MODES } from "@/lib/config";
 
 const NICK_KEY = "colony:nickname";
@@ -25,7 +24,6 @@ export function rememberNickname(value: string) {
 }
 
 export function HomeEntry() {
-  const router = useRouter();
   const [tab, setTab] = useState<"create" | "join">("create");
   const [nickname, setNickname] = useState("");
   const [code, setCode] = useState("");
@@ -60,7 +58,7 @@ export function HomeEntry() {
         setError(body?.error?.message ?? "Couldn't create the room. Try again.");
         return;
       }
-      router.push(`/room/${body.roomCode}`);
+      window.location.assign(`/room/${body.roomCode}`);
     } catch {
       setError("Couldn't connect. Check your connection and try again.");
     } finally {
@@ -94,7 +92,7 @@ export function HomeEntry() {
         setError(body?.error?.message ?? "Couldn't join that room.");
         return;
       }
-      router.push(`/room/${body.roomCode}`);
+      window.location.assign(`/room/${body.roomCode}`);
     } catch {
       setError("Couldn't connect. Check your connection and try again.");
     } finally {

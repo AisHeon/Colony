@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DEFAULT_SETTINGS, MODES, type RoomSettings } from "@/lib/config";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
@@ -9,7 +8,6 @@ import { RoomSettingsForm } from "@/components/RoomSettingsForm";
 import { readNickname, rememberNickname } from "@/components/HomeEntry";
 
 export default function CreateRoomPage() {
-  const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +36,7 @@ export default function CreateRoomPage() {
         setError(body?.error?.message ?? "Couldn't create the room. Try again.");
         return;
       }
-      router.push(`/room/${body.roomCode}`);
+      window.location.assign(`/room/${body.roomCode}`);
     } catch {
       setError("Couldn't connect. Check your connection and try again.");
     } finally {

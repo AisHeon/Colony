@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { readNickname, rememberNickname } from "./HomeEntry";
 
 export function JoinForm({ initialCode = "" }: { initialCode?: string }) {
-  const router = useRouter();
   const [code, setCode] = useState(initialCode);
   const [nickname, setNickname] = useState("");
   const [busy, setBusy] = useState(false);
@@ -49,7 +47,7 @@ export function JoinForm({ initialCode = "" }: { initialCode?: string }) {
         setError(body?.error?.message ?? "Couldn't join that room.");
         return;
       }
-      router.push(`/room/${body.roomCode}`);
+      window.location.assign(`/room/${body.roomCode}`);
     } catch {
       setError("Couldn't connect. Check your connection and try again.");
     } finally {

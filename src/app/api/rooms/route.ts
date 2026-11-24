@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const db = await getDb();
     const { room } = await createRoom(db, guest.id, body.nickname, body.settings as never);
     const snapshot = await buildSnapshotForRoom(db, room, guest.id);
-    return ok({ roomCode: room.code, snapshot });
+    return ok({ roomCode: room.code, snapshot }, { status: 201 });
   } catch (error) {
     return fail(error);
   }
