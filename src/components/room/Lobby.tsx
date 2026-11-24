@@ -50,7 +50,8 @@ export function Lobby({
   const packs = settings.packs ?? ["all"];
   const isHost = snapshot.you.isHost;
   const mode = MODES[settings.mode];
-  const emptySeats = Math.min(8, Math.max(0, Math.min(settings.maxPlayers, players.length + 4) - players.length));
+  // Fill out the current grid row (four across) so open seats never orphan.
+  const emptySeats = Math.min(8, (4 - (players.length % 4)) % 4 || (players.length ? 0 : 4));
 
   function update(patch: Partial<RoomSettings>) {
     void send({ type: "room:updateSettings", settings: patch });

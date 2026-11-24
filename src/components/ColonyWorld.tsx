@@ -262,7 +262,7 @@ export function CasteRibbon() {
 export function AntAvatar({ name, index, size = 40 }: { name: string; index: number; size?: number }) {
   return (
     <span className="ant-avatar" style={{ width: size, height: size }} aria-hidden="true">
-      <AntSkin index={index} size={size} name={name} />
+      <AntSkin index={index} size={size} />
     </span>
   );
 }
