@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 const schema = z.object({
   nickname: z.string().min(1).max(40),
   settings: z.record(z.unknown()).optional(),
+  avatar: z.number().int().min(0).max(7).optional(),
 });
 
 export async function POST(request: Request) {
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       return ok({ error: { code: "RATE_LIMITED", message: "Give it a moment before creating another room." } }, { status: 429 });
     }
     const db = await getDb();
-    const { room } = await createRoom(db, guest.id, body.nickname, body.settings as never);
+    const { room } = await createRoom(db, guest.id, body.nickname, body.settings as never, Date.now(), body.avatar);
     const snapshot = await buildSnapshotForRoom(db, room, guest.id);
     return ok({ roomCode: room.code, snapshot }, { status: 201 });
   } catch (error) {

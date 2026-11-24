@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import "./jungle.css";
 import { HomeEntry } from "@/components/HomeEntry";
-import { JungleVine } from "@/components/JungleCast";
+import { JungleBush, JungleVine, PalmFrond } from "@/components/JungleCast";
+import { ScrollFX } from "@/components/ScrollFX";
 import { GAME_TAGLINE } from "@/lib/config";
 
 // 24 × 14 crop of the hero art, inlined so the first paint is the jungle rather
@@ -13,6 +14,7 @@ const HERO_BLUR =
 export default function HomePage() {
   return (
     <div className="jungle-home">
+      <ScrollFX />
       <JungleVine />
       <section className="jungle-hero" aria-label="Colony">
         <div className="jungle-hero-stage">
@@ -31,9 +33,11 @@ export default function HomePage() {
               <Image
                 src="/art/jungle/hero-ant.webp"
                 alt=""
-                width={600}
-                height={507}
+                width={960}
+                height={811}
                 priority
+                quality={94}
+                sizes="(min-width: 1100px) 29vw, 50vw"
                 className="jungle-hero-ant"
               />
             </span>
@@ -41,9 +45,11 @@ export default function HomePage() {
               <Image
                 src="/art/jungle/hero-cricket.webp"
                 alt=""
-                width={638}
-                height={544}
+                width={1021}
+                height={871}
                 priority
+                quality={94}
+                sizes="(min-width: 1100px) 31vw, 52vw"
                 className="jungle-hero-cricket"
               />
             </span>
@@ -65,11 +71,17 @@ export default function HomePage() {
         </a>
       </section>
 
-      <section className="jungle-lobby" id="lobby" aria-label="Lobby">
+      <section className="jungle-lobby" id="lobby" aria-label="Lobby" data-reveal>
+        <div className="jungle-canopy" aria-hidden="true">
+          <PalmFrond className="frond-left" />
+          <PalmFrond className="frond-right" />
+          <JungleBush className="bush-left" />
+          <JungleBush className="bush-right" />
+        </div>
         <HomeEntry />
       </section>
 
-      <footer className="jungle-footer">
+      <footer className="jungle-footer" data-reveal>
         <p className="jungle-footer-brand">Colony</p>
         <p className="jungle-footer-line">{GAME_TAGLINE}</p>
         <nav className="jungle-footer-links" aria-label="Footer">

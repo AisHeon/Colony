@@ -136,3 +136,23 @@ export function JungleVine() {
     </div>
   );
 }
+
+/** A palm frond silhouette. Drop it in `.jungle-canopy` and it unrolls on reveal. */
+export function PalmFrond({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 240 160" fill="currentColor" aria-hidden="true">
+      <path d="M4 2c10 44 34 84 70 110 14 10 30 18 46 22-14-12-26-28-34-46-12-26-16-56-12-86-8 4-16 10-22 18-10 12-16 26-18 40 18-4 36 0 52 12 18 13 30 32 36 54 4-30 0-62-12-90C96 8 52-6 4 2Z" />
+    </svg>
+  );
+}
+
+/** Low bush silhouette used at the bottom corners of a revealed section. */
+export function JungleBush({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 260 140" fill="currentColor" aria-hidden="true">
+      <path d="M10 140c0-30 10-54 30-70 14-12 32-18 50-18 6-14 18-24 34-26 18-2 34 6 44 20 16 2 30 12 38 26 10 16 14 34 12 52H10Z" />
+      <path d="M118 46c-4-14-2-26 6-36 6 12 8 24 4 38Z" opacity="0.7" />
+      <path d="M52 66c-6-12-6-24 0-34 8 10 12 22 10 36Z" opacity="0.7" />
+    </svg>
+  );
+}

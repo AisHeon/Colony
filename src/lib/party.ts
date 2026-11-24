@@ -18,14 +18,19 @@ export function shuffle<T>(items: readonly T[], rng: Rng): T[] {
  * alternative exists. With four or more rounds every mode appears before any
  * repeat.
  */
-export function buildPlaylist(roundCount: number, rng: Rng = Math.random): PlayableMode[] {
+export function buildPlaylist(
+  roundCount: number,
+  rng: Rng = Math.random,
+  pool: PlayableMode[] = PLAYABLE_MODES,
+): PlayableMode[] {
+  const modes = pool.length ? pool : PLAYABLE_MODES;
   const count = Math.max(0, Math.floor(roundCount));
   const out: PlayableMode[] = [];
   let bag: PlayableMode[] = [];
 
   while (out.length < count) {
     if (bag.length === 0) {
-      bag = shuffle(PLAYABLE_MODES, rng);
+      bag = shuffle(modes, rng);
       const previous = out[out.length - 1];
       if (previous && bag[0] === previous) {
         const alternative = bag.findIndex((mode) => mode !== previous);

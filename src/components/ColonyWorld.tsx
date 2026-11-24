@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { RARITIES, TOPIC_PACKS, type Rarity, type TopicPack } from "@/lib/config";
+import { AntSkin } from "./skins";
 
 /**
  * The macro world: giant grass above, soil strata below. Static SVG only, so
@@ -259,27 +260,9 @@ export function CasteRibbon() {
 }
 
 export function AntAvatar({ name, index, size = 40 }: { name: string; index: number; size?: number }) {
-  const initial = [...name.trim()][0]?.toUpperCase() ?? "?";
   return (
-    <span
-      className="ant-avatar"
-      style={{ width: size, height: size, ["--bug-hue" as string]: `${(index * 47) % 360}` }}
-      aria-hidden="true"
-    >
-      <svg viewBox="0 0 40 40" width={size} height={size}>
-        <circle cx="20" cy="20" r="18" fill="#2B1A0E" stroke="#7A9B3E" strokeWidth="2" />
-        <g fill="#E8D5B5" stroke="#1A0F08" strokeWidth="1">
-          <ellipse cx="20" cy="27" rx="5.2" ry="6.2" />
-          <circle cx="20" cy="19" r="3.1" />
-          <circle cx="20" cy="13" r="2.7" />
-        </g>
-        <g stroke="#E8D5B5" strokeWidth="1.3" strokeLinecap="round">
-          <path d="M15 17 10 13M15 20l-5 1M15 25l-4 4M25 17l5-4M25 20l5 1M25 25l4 4M18.5 11 17 7M21.5 11l1.5-4" />
-        </g>
-        <text x="33" y="11" textAnchor="middle" fontSize="9" fill="#F5A623" fontFamily="var(--mono)">
-          {initial}
-        </text>
-      </svg>
+    <span className="ant-avatar" style={{ width: size, height: size }} aria-hidden="true">
+      <AntSkin index={index} size={size} name={name} />
     </span>
   );
 }

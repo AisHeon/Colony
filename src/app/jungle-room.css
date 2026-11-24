@@ -470,3 +470,295 @@
 .jungle-room .pack-chip svg {
   color: var(--accent);
 }
+
+/* ------------------------------------------------------------- lobby mock */
+
+.jungle-room .lobby-screen.lobby-mock {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+.jungle-room .lobby-codebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+  padding: 16px 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(9, 36, 7, 0.5);
+  box-shadow: var(--shadow-card);
+}
+
+.jungle-room .lobby-codebar-id {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.jungle-room .lobby-codebar-code {
+  font-family: var(--mono);
+  font-size: 26px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.jungle-room .lobby-codebar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jungle-room .lobby-codebar-hint {
+  margin: 0 0 0 auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.jungle-room .lobby-mock-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.jungle-room .lobby-players,
+.jungle-room .lobby-host {
+  padding: 26px 28px;
+  border: 1px solid rgba(168, 224, 99, 0.16);
+  border-radius: 26px;
+  background:
+    radial-gradient(120% 90% at 12% 0%, rgba(124, 194, 66, 0.16), transparent 60%),
+    linear-gradient(180deg, rgba(31, 90, 25, 0.86), rgba(11, 40, 10, 0.94));
+  box-shadow: var(--shadow-card);
+}
+
+.jungle-room .lobby-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.jungle-room .lobby-panel-head h2,
+.jungle-room .lobby-host > h2 {
+  margin: 0;
+  font-family: var(--jungle-serif);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.jungle-room .lobby-count {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.jungle-room .player-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 20px 14px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.jungle-room .player-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.jungle-room .player-tile .ant-avatar {
+  border-radius: 50%;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+}
+
+.jungle-room .player-tile-name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.jungle-room .player-tile-meta {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.jungle-room .player-tile-meta.is-away {
+  color: var(--warn);
+}
+
+.jungle-room .player-tile.is-empty .player-seat {
+  display: block;
+  width: 76px;
+  height: 76px;
+  border: 1px dashed rgba(168, 224, 99, 0.24);
+  border-radius: 50%;
+}
+
+.jungle-room .player-tile.is-empty .player-tile-name {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.jungle-room .lobby-watching h3 {
+  font-size: 16px;
+}
+
+.jungle-room .host-fields {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.jungle-room .host-field {
+  display: grid;
+  gap: 6px;
+}
+
+.jungle-room .host-label {
+  font-size: 14px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.jungle-room .host-pill {
+  width: 100%;
+  padding: 10px 18px;
+  border: 1px solid rgba(168, 224, 99, 0.3);
+  border-radius: 999px;
+  background: rgba(168, 224, 99, 0.16);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  text-align: center;
+  text-align-last: center;
+  cursor: pointer;
+  appearance: none;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.jungle-room .host-pill:hover {
+  background: rgba(168, 224, 99, 0.24);
+  border-color: rgba(168, 224, 99, 0.5);
+}
+
+.jungle-room .host-pill option {
+  background: #123f10;
+  color: var(--ink);
+}
+
+.jungle-room .host-drop summary {
+  list-style: none;
+}
+
+.jungle-room .host-drop summary::-webkit-details-marker {
+  display: none;
+}
+
+.jungle-room .host-drop-body {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(7, 28, 6, 0.75);
+}
+
+.jungle-room .host-advanced {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(168, 224, 99, 0.18);
+}
+
+.jungle-room .host-advanced h3 {
+  margin: 0;
+  text-align: center;
+  font-family: var(--jungle-serif);
+  font-weight: 400;
+  font-size: 24px;
+}
+
+.jungle-room .host-modes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+}
+
+.jungle-room .host-mode {
+  padding: 7px 12px;
+  border: 1px solid rgba(168, 224, 99, 0.22);
+  border-radius: 999px;
+  background: rgba(7, 28, 6, 0.4);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.jungle-room .host-mode.is-on {
+  border-color: var(--accent);
+  background: rgba(168, 224, 99, 0.18);
+  color: var(--accent);
+}
+
+.jungle-room .host-readonly {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 0;
+}
+
+.jungle-room .host-readonly > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.jungle-room .host-readonly dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.jungle-room .host-readonly dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.jungle-room .lobby-host-note {
+  margin-top: 16px;
+}
+
+@media (max-width: 1000px) {
+  .jungle-room .lobby-mock-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .jungle-room .lobby-codebar-hint {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .jungle-room .lobby-players,
+  .jungle-room .lobby-host {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  .jungle-room .player-grid {
+    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  }
+}

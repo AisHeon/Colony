@@ -17,6 +17,7 @@ import { HOPPER_QUESTIONS } from "../content/catalog/hopper";
 import { GRAPH_ENTITIES, GRAPH_EDGES, PUZZLES } from "../content/catalog/graph";
 import { HISTORY_GROUPS, HISTORY_POOL_GROUPS, HISTORY_PROMPTS } from "../content/catalog/history";
 import { WORDPLAY_PROMPTS } from "../content/catalog/wordplay";
+import { IMPORTED_PROMPTS } from "../content/catalog/imported";
 
 type SeedEntity = {
   id: string;
@@ -150,6 +151,32 @@ async function main() {
     list.push(entity);
     byType.set(entity.type, list);
   }
+
+  // Imported TXT prompts carry their own rarity tiers, so their answers store
+  // rarity explicitly instead of using the catalog-order split below.
+  const IMPORTED_RARITY: Rarity[] = ["forager", "soldier", "royal", "queen", "apex"];
+  const importedPrompts = IMPORTED_PROMPTS.map((prompt) => {
+    const answers = prompt.tiers.flatMap((tier, tierIndex) =>
+      tier.map((raw) => {
+        const [namePart, aliasPart = ""] = raw.split("|").map((part) => part.trim());
+        const key = normalizeKey(namePart);
+        const aliases = aliasPart.split(",").map((alias) => alias.trim()).filter(Boolean);
+        const existing = entities.find((entry) => normalizeKey(entry.name) === key);
+        let entity = existing;
+        if (entity) {
+          for (const alias of aliases) if (!entity.aliases.includes(alias)) entity.aliases.push(alias);
+        } else {
+          let id = `imp_${entitySlug(namePart)}`;
+          let suffix = 1;
+          while (entities.some((entry) => entry.id === id)) id = `imp_${entitySlug(namePart)}_${suffix++}`;
+          entity = { id, name: namePart, type: "prompt_answer", aliases, attrs: {} };
+          entities.push(entity);
+        }
+        return { entity, rarity: IMPORTED_RARITY[Math.min(tierIndex, IMPORTED_RARITY.length - 1)] };
+      }),
+    );
+    return { ...prompt, answers };
+  });
 
   const selectAnswers = (prompt: (typeof PROMPTS)[number]): SeedEntity[] => {
     let pool = byType.get(prompt.type) ?? [];
@@ -341,6 +368,44 @@ async function main() {
         promptAnswerCount += 1;
       }
       console.log(`[seed] ${prompt.id.padEnd(34)} ${answers.length} answers`);
+    }
+
+    for (const prompt of importedPrompts) {
+      if (prompt.answers.length < 8) {
+        console.warn(`[seed] imported prompt ${prompt.slug} has only ${prompt.answers.length} answers; skipping`);
+        continue;
+      }
+      for (const kind of ["anthill", "beehive"] as const) {
+        const id = `import.${prompt.slug}.${kind}`;
+        await q(
+          `insert into prompt (id, kind, text, scope, pack, family_friendly, version, meta)
+           values ($1,$2,$3,$4,$5,true,$6,$7::jsonb)`,
+          [
+            id,
+            kind,
+            prompt.text,
+            prompt.scope,
+            prompt.pack,
+            CONTENT_VERSION,
+            JSON.stringify({
+              scopeNoun: "answer",
+              expectedTypes: ["prompt_answer"],
+              rejectTypes: {},
+              answerCount: prompt.answers.length,
+              pack: prompt.pack,
+            }),
+          ],
+        );
+        for (const answer of prompt.answers) {
+          await q("insert into prompt_answer (prompt_id, entity_id, rarity) values ($1,$2,$3)", [
+            id,
+            answer.entity.id,
+            answer.rarity,
+          ]);
+          promptAnswerCount += 1;
+        }
+      }
+      console.log(`[seed] ${`import.${prompt.slug}`.padEnd(34)} ${prompt.answers.length} answers × 2 modes`);
     }
 
     for (const question of HOPPER_QUESTIONS) {

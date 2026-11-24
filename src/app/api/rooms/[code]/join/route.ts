@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 const schema = z.object({
   code: z.string().min(1).max(200),
   nickname: z.string().min(1).max(40).optional(),
+  avatar: z.number().int().min(0).max(7).optional(),
 });
 
 export async function POST(request: Request, ctx: { params: Promise<{ code: string }> }) {
@@ -25,7 +26,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
     }
     const { guest } = await ensureGuest();
     const db = await getDb();
-    const outcome = await joinRoom(db, guest.id, normalized, body.nickname ?? null);
+    const outcome = await joinRoom(db, guest.id, normalized, body.nickname ?? null, Date.now(), body.avatar);
     const snapshot = await buildSnapshotForRoom(db, outcome.room, guest.id);
     return ok({
       roomCode: outcome.room.code,

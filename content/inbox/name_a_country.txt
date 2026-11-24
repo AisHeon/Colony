@@ -1,0 +1,234 @@
+Name a Country
+United States
+United Kingdom
+Canada
+Mexico
+France
+Germany
+Italy
+Spain
+Japan
+China
+India
+Brazil
+Australia
+Russia
+South Korea
+
+Egypt
+Greece
+Sweden
+Norway
+Switzerland
+Netherlands
+Belgium
+Portugal
+Ireland
+Poland
+Turkey
+Ukraine
+Austria
+Denmark
+Finland
+South Africa
+Nigeria
+Argentina
+Chile
+Colombia
+Peru
+New Zealand
+Indonesia
+Thailand
+Vietnam
+Philippines
+Singapore
+Israel
+Saudi Arabia
+Cuba
+Jamaica
+Pakistan
+Malaysia
+Kenya
+
+Iceland
+Croatia
+Slovenia
+Slovakia
+Estonia
+Latvia
+Lithuania
+Luxembourg
+Malta
+Cyprus
+Bulgaria
+Romania
+Hungary
+Czech Republic
+Serbia
+Bosnia and Herzegovina
+Montenegro
+Albania
+North Macedonia
+Moldova
+Vatican City
+Georgia
+Armenia
+Azerbaijan
+Kazakhstan
+Uzbekistan
+Mongolia
+Nepal
+Bhutan
+Sri Lanka
+Myanmar
+Cambodia
+Laos
+Bangladesh
+Afghanistan
+Jordan
+Lebanon
+Qatar
+Kuwait
+Oman
+Bahrain
+Iran
+Iraq
+United Arab Emirates
+Tunisia
+Morocco
+Algeria
+Libya
+Ghana
+Senegal
+Uganda
+Tanzania
+Zambia
+Zimbabwe
+Ethiopia
+Rwanda
+Botswana
+Namibia
+Madagascar
+Fiji
+Papua New Guinea
+Haiti
+Dominican Republic
+Costa Rica
+Panama
+Guatemala
+Honduras
+Nicaragua
+El Salvador
+Uruguay
+Paraguay
+Bolivia
+Ecuador
+Venezuela
+Guyana
+Suriname
+Belize
+Taiwan
+
+San Marino
+Liechtenstein
+Monaco
+Andorra
+Cape Verde
+Seychelles
+Mauritius
+Samoa
+Tonga
+Vanuatu
+Solomon Islands
+Timor-Leste
+Brunei
+Maldives
+South Sudan
+Central African Republic
+Chad
+Niger
+Burkina Faso
+Mali
+Somalia
+Eritrea
+Liberia
+Sierra Leone
+Togo
+Benin
+Gabon
+Republic of the Congo
+Democratic Republic of the Congo
+Angola
+Mozambique
+Cameroon
+Ivory Coast
+Saint Kitts and Nevis
+Saint Lucia
+Saint Vincent and the Grenadines
+Grenada
+Dominica
+Antigua and Barbuda
+Barbados
+Trinidad and Tobago
+Bahamas
+Tajikistan
+Kyrgyzstan
+Turkmenistan
+Belarus
+North Korea
+Syria
+Yemen
+Sudan
+Kosovo
+Palestine
+Mauritania
+Gambia
+Malawi
+Burundi
+Lesotho
+Eswatini
+Guinea-Bissau
+Equatorial Guinea
+Sao Tome and Principe
+Comoros
+
+Djibouti
+Tuvalu
+Nauru
+Palau
+Micronesia
+Marshall Islands
+Kiribati
+Cook Islands
+Niue
+Western Sahara
+Sahrawi Arab Democratic Republic
+Somaliland
+Transnistria
+Abkhazia
+South Ossetia
+Northern Cyprus
+Sealand
+Liberland
+Molossia
+Holy See
+Cabo Verde
+Cote d'Ivoire
+Turkiye
+Czechia
+Viet Nam
+Russian Federation
+United States of America
+United Kingdom of Great Britain and Northern Ireland
+Republic of Korea
+Democratic People's Republic of Korea
+State of Palestine
+Brunei Darussalam
+Lao People's Democratic Republic
+Syrian Arab Republic
+East Timor
+Swaziland
+Burma
+Zaire
+Congo
+DR Congo

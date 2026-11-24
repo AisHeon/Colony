@@ -171,7 +171,20 @@ export function normalizeSettings(input: Partial<RoomSettings> | undefined): Roo
     packs: normalizePacks(input?.packs),
     spiderSeconds,
     hopperSeconds,
+    partyModes: normalizePartyModes(input?.partyModes),
   };
+}
+
+function normalizePartyModes(input: unknown): PlayableMode[] {
+  if (!Array.isArray(input)) return [...PLAYABLE_MODES];
+  const picked = [
+    ...new Set(
+      input
+        .map(String)
+        .filter((id): id is PlayableMode => (PLAYABLE_MODES as string[]).includes(id)),
+    ),
+  ];
+  return picked.length ? picked : [...PLAYABLE_MODES];
 }
 
 function normalizePacks(input: unknown): string[] {
@@ -285,6 +298,7 @@ export async function createRoom(
   nicknameRaw: string,
   settingsInput: Partial<RoomSettings> | undefined,
   now = Date.now(),
+  avatar?: number,
 ): Promise<{ room: RoomRow; member: MemberRow }> {
   const nickname = validateNickname(nicknameRaw);
   const settings = normalizeSettings(settingsInput);
@@ -309,7 +323,7 @@ export async function createRoom(
     await q(
       `insert into room_member (id, room_id, guest_id, nickname, nickname_norm, avatar, joined_at, last_seen_at, ready, spectator)
        values ($1,$2,$3,$4,$5,$6,$7,$7,true,false)`,
-      [memberId, roomId, guestId, nickname, normalizeNickname(nickname), randomInt(0, 8), now],
+      [memberId, roomId, guestId, nickname, normalizeNickname(nickname), avatar ?? randomInt(0, 8), now],
     );
 
     const roomRows = await q<Row>("select * from room where id = $1", [roomId]);
@@ -334,6 +348,7 @@ export async function joinRoom(
   rawCode: string,
   nicknameRaw: string | null,
   now = Date.now(),
+  avatar?: number,
 ): Promise<JoinOutcome> {
   const code = rawCode.trim().toUpperCase();
   return db.transaction(async (q) => {
@@ -402,7 +417,7 @@ export async function joinRoom(
     await q(
       `insert into room_member (id, room_id, guest_id, nickname, nickname_norm, avatar, joined_at, last_seen_at, ready, spectator)
        values ($1,$2,$3,$4,$5,$6,$7,$7,false,$8)`,
-      [memberId, room.id, guestId, nickname, nicknameNorm, randomInt(0, 8), now, mustSpectate],
+      [memberId, room.id, guestId, nickname, nicknameNorm, avatar ?? randomInt(0, 8), now, mustSpectate],
     );
     await q("update room set last_activity_at = $2 where id = $1", [room.id, now]);
     const rows = await q<Row>("select * from room_member where id = $1", [memberId]);
@@ -477,7 +492,7 @@ export async function startMatchTx(
   }
 
   const settings = room.settings;
-  const playlist = settings.mode === "party" ? buildPlaylist(settings.rounds, () => Math.random()) : [];
+  const playlist = settings.mode === "party" ? buildPlaylist(settings.rounds, () => Math.random(), settings.partyModes) : [];
   const roundCount = settings.mode === "party" ? playlist.length : settings.rounds;
   const config: MatchConfig = {
     ...settings,

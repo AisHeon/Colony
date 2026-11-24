@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MODES, packLabel, type RoomSettings } from "@/lib/config";
+import {
+  MODES,
+  MODE_ORDER,
+  PLAYABLE_MODES,
+  packLabel,
+  type ModeId,
+  type PlayableMode,
+  type RoomSettings,
+} from "@/lib/config";
 import type { Snapshot } from "@/lib/game/types";
 import { CopyButton } from "@/components/ui";
 import { AntAvatar } from "@/components/ColonyWorld";
-import { RoomSettingsForm } from "@/components/RoomSettingsForm";
 import { TopicPicker } from "@/components/TopicPacks";
 import type { IntentAck, IntentBody } from "@/components/useRoom";
 
@@ -37,6 +44,26 @@ export function Lobby({
         ? `Waiting for ${waitingOn.map((member) => member.nickname).join(", ")}.`
         : null;
 
+  const settings = snapshot.room.settings as RoomSettings;
+  const partyModes: PlayableMode[] =
+    settings.partyModes && settings.partyModes.length ? settings.partyModes : PLAYABLE_MODES;
+  const packs = settings.packs ?? ["all"];
+  const isHost = snapshot.you.isHost;
+  const mode = MODES[settings.mode];
+  const emptySeats = Math.min(8, Math.max(0, Math.min(settings.maxPlayers, players.length + 4) - players.length));
+
+  function update(patch: Partial<RoomSettings>) {
+    void send({ type: "room:updateSettings", settings: patch });
+  }
+
+  function togglePartyMode(id: PlayableMode) {
+    const next = partyModes.includes(id)
+      ? partyModes.filter((entry) => entry !== id)
+      : [...partyModes, id];
+    if (!next.length) return;
+    update({ partyModes: next });
+  }
+
   async function share() {
     try {
       if (navigator.share) {
@@ -55,106 +82,68 @@ export function Lobby({
     }
   }
 
-  const mode = MODES[snapshot.room.settings.mode];
-  const packs = snapshot.room.settings.packs ?? ["all"];
-
   return (
-    <div className="game-grid lobby-screen">
-      <div className="stack">
-        <section className="card lobby-plate stack">
-          <div className="spread" style={{ alignItems: "flex-start" }}>
-            <div className="stack-sm">
-              <p className="eyebrow">Room code · share this</p>
-              <div className="room-code lobby-code">
-                <ScrambleCode code={snapshot.room.code} />
-              </div>
-            </div>
-            <div className="row-tight lobby-actions">
-              <CopyButton value={snapshot.room.code} label="Copy code" copiedLabel="Copied" />
-              <CopyButton value={invite} label="Invite link" copiedLabel="Link copied" />
-              <button type="button" className="btn btn-ghost btn-sm" onClick={share}>
-                Share
-              </button>
-            </div>
-          </div>
-          <p className="lobby-code-hint">
-            Send this code. Anyone who has it can join while the room is open.
+    <div className="lobby-screen lobby-mock">
+      <section className="lobby-codebar">
+        <div className="lobby-codebar-id">
+          <span className="eyebrow">Room code</span>
+          <strong className="lobby-codebar-code">
+            <ScrambleCode code={snapshot.room.code} />
+          </strong>
+        </div>
+        <div className="lobby-codebar-actions">
+          <CopyButton value={snapshot.room.code} label="Copy code" copiedLabel="Copied" />
+          <CopyButton value={invite} label="Invite link" copiedLabel="Link copied" />
+          <button type="button" className="btn btn-ghost btn-sm" onClick={share}>
+            Share
+          </button>
+        </div>
+        <p className="lobby-codebar-hint">Anyone with this code can join while the room is open.</p>
+        {shareNote ? (
+          <p className="small lobby-codebar-hint" role="status">
+            {shareNote}
           </p>
-          {shareNote ? (
-            <p className="small" role="status">
-              {shareNote}
-            </p>
-          ) : null}
-        </section>
+        ) : null}
+      </section>
 
-        <section className="lobby-cta">
-          <div className="lobby-cta-copy">
-            <span className="eyebrow">{snapshot.you.isHost ? "Ready when you are" : "Take your seat"}</span>
-            <p>
-              {snapshot.you.isHost
-                ? (startReason ?? "Everyone is ready. The tunnel is waiting.")
-                : snapshot.you.ready
-                  ? "You're ready. Waiting for the host to start."
-                  : "Mark ready so the host can start."}
-            </p>
-          </div>
-          {snapshot.you.isHost ? (
-            <button
-              type="button"
-              className="btn btn-primary btn-lg lobby-start"
-              disabled={!canStart || pending}
-              onClick={() => send({ type: "match:start" })}
-              title={startReason ?? "Start the match"}
-            >
-              Start match
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={`btn btn-lg lobby-start ${snapshot.you.ready ? "btn-secondary" : "btn-primary"}`}
-              aria-pressed={snapshot.you.ready}
-              disabled={pending}
-              onClick={() => send({ type: "room:ready", ready: !snapshot.you.ready })}
-            >
-              {snapshot.you.ready ? "Ready — tap to undo" : "I'm ready"}
-            </button>
-          )}
-        </section>
-
-        <section className="card lobby-panel stack">
-          <div className="spread">
+      <div className="lobby-mock-grid">
+        <section className="lobby-players">
+          <header className="lobby-panel-head">
             <h2>Players</h2>
-            <span className="badge">
-              {players.length}/{snapshot.room.settings.maxPlayers}
+            <span className="lobby-count">
+              {players.length}/{settings.maxPlayers}
             </span>
-          </div>
-          <ul className="roster">
+          </header>
+
+          <ul className="player-grid">
             {players.map((member) => (
-              <li
-                key={member.id}
-                className={`member${member.id === snapshot.you.memberId ? " is-you" : ""}`}
-              >
-                <AntAvatar name={member.nickname} index={member.avatar} />
-                <span className="member-name grow">
+              <li key={member.id} className="player-tile">
+                <AntAvatar name={member.nickname} index={member.avatar} size={76} />
+                <span className="player-tile-name">
                   {member.nickname}
-                  {member.id === snapshot.you.memberId ? <span className="tiny muted"> · you</span> : null}
+                  {member.id === snapshot.you.memberId ? " (YOU)" : ""}
                 </span>
-                {member.isHost ? <span className="badge badge-accent">Host</span> : null}
-                {member.ready ? <span className="badge badge-ok">Ready</span> : null}
-                {!member.connected ? <span className="badge badge-warn">Away</span> : null}
-                <span className={`dot ${member.connected ? "online" : ""}`} aria-hidden="true" />
+                <span className={`player-tile-meta${member.connected ? "" : " is-away"}`}>
+                  {member.isHost ? "Host" : member.ready ? "Ready" : member.connected ? "Waiting" : "Away"}
+                </span>
+              </li>
+            ))}
+            {Array.from({ length: emptySeats }).map((_, index) => (
+              <li key={`seat-${index}`} className="player-tile is-empty" aria-hidden="true">
+                <span className="player-seat" />
+                <span className="player-tile-name muted">Open</span>
               </li>
             ))}
           </ul>
 
           {spectators.length ? (
-            <div className="stack-sm">
+            <div className="lobby-watching">
               <hr className="divider" />
               <h3>Watching</h3>
               <ul className="roster">
                 {spectators.map((member) => (
                   <li key={member.id} className="member">
-                    <AntAvatar name={member.nickname} index={member.avatar} size={30} />
+                    <AntAvatar name={member.nickname} index={member.avatar} size={28} />
                     <span className="member-name grow">{member.nickname}</span>
                     <span className="badge">spectator</span>
                   </li>
@@ -164,93 +153,148 @@ export function Lobby({
           ) : null}
         </section>
 
-        <section className="card lobby-panel stack-sm topic-panel">
-          <div className="spread">
-            <h2>Topics</h2>
-            <span className="badge badge-outline">{packLabel(packs)}</span>
-          </div>
-          {snapshot.you.isHost ? (
-            <>
-              <TopicPicker
-                value={packs}
-                compact
-                disabled={pending}
-                onChange={(next) => send({ type: "room:updateSettings", settings: { packs: next } })}
-              />
-              <p className="hint">Tap to mix. Changing topics clears ready states.</p>
-            </>
+        <aside className="lobby-host">
+          <h2>Host Settings</h2>
+
+          {isHost ? (
+            <div className="host-fields">
+              <label className="host-field">
+                <span className="host-label">Gamemode</span>
+                <select
+                  className="host-pill"
+                  value={settings.mode}
+                  disabled={pending}
+                  onChange={(event) => update({ mode: event.target.value as ModeId })}
+                >
+                  {MODE_ORDER.map((id) => (
+                    <option key={id} value={id}>
+                      {MODES[id].name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="host-field">
+                <span className="host-label">Rounds</span>
+                <select
+                  className="host-pill"
+                  value={settings.rounds}
+                  disabled={pending}
+                  onChange={(event) => update({ rounds: Number(event.target.value) })}
+                >
+                  {Array.from({ length: 20 }, (_, index) => index + 1).map((count) => (
+                    <option key={count} value={count}>
+                      {count}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="host-field">
+                <span className="host-label">Topics</span>
+                <details className="host-drop">
+                  <summary className="host-pill">{packLabel(packs)}</summary>
+                  <div className="host-drop-body">
+                    <TopicPicker
+                      compact
+                      value={packs}
+                      disabled={pending}
+                      onChange={(next) => update({ packs: next })}
+                    />
+                  </div>
+                </details>
+              </div>
+
+              <div className="host-advanced">
+                <h3>Advanced</h3>
+                <span className="host-label">Party Gamemodes</span>
+                <div className="host-modes" role="group" aria-label="Party minigames">
+                  {PLAYABLE_MODES.map((id) => {
+                    const on = partyModes.includes(id);
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`host-mode${on ? " is-on" : ""}`}
+                        aria-pressed={on}
+                        disabled={pending}
+                        onClick={() => togglePartyMode(id)}
+                      >
+                        {MODES[id].name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="hint">
+                  {settings.mode === "party"
+                    ? "Party draws from the checked minigames."
+                    : "Used when the gamemode is Party."}
+                </p>
+              </div>
+            </div>
           ) : (
-            <p className="small muted">{packLabel(packs)}</p>
+            <dl className="host-readonly">
+              <div>
+                <dt>Mode</dt>
+                <dd>{mode.name}</dd>
+              </div>
+              <div>
+                <dt>Rounds</dt>
+                <dd>{settings.rounds}</dd>
+              </div>
+              <div>
+                <dt>Topics</dt>
+                <dd>{packLabel(packs)}</dd>
+              </div>
+              <div>
+                <dt>Content</dt>
+                <dd>{settings.familyFriendly ? "Family-friendly" : "Standard"}</dd>
+              </div>
+              <p className="hint">The host controls these.</p>
+            </dl>
           )}
-        </section>
 
-        {snapshot.you.isHost && snapshot.room.status !== "closed" ? (
-          <details className="card">
-            <summary style={{ cursor: "pointer", fontWeight: 650 }}>
-              Host settings — {mode.name}, {snapshot.room.settings.rounds} round
-              {snapshot.room.settings.rounds === 1 ? "" : "s"}
-            </summary>
-            <div style={{ marginTop: 16 }}>
-              <RoomSettingsForm
-                initial={snapshot.room.settings as RoomSettings}
-                submitLabel="Save settings"
-                busy={pending}
-                onSubmit={(settings) => send({ type: "room:updateSettings", settings })}
-              />
-            </div>
-          </details>
-        ) : null}
-      </div>
-
-      <aside className="stack">
-        <section className="card lobby-panel stack">
-          <div className="row-tight">
-            <h2>{mode.name}</h2>
-            <span className="badge">{mode.timerLabel}</span>
-          </div>
-          <p className="small muted">{mode.blurb}</p>
-          <ul className="rule-list">
-            {mode.rules.map((rule) => (
-              <li key={rule}>{rule}</li>
-            ))}
-          </ul>
-          <hr className="divider" />
-          <dl className="stack-sm" style={{ margin: 0 }}>
-            <div className="spread small">
-              <dt className="muted">Rounds</dt>
-              <dd style={{ margin: 0 }}>{snapshot.room.settings.rounds}</dd>
-            </div>
-            <div className="spread small">
-              <dt className="muted">Max players</dt>
-              <dd style={{ margin: 0 }}>{snapshot.room.settings.maxPlayers}</dd>
-            </div>
-            <div className="spread small">
-              <dt className="muted">Content</dt>
-              <dd style={{ margin: 0 }}>
-                {snapshot.room.settings.familyFriendly ? "Family-friendly" : "Standard"}
-              </dd>
-            </div>
-            {snapshot.room.settings.mode === "spider" || snapshot.room.settings.mode === "party" ? (
-              <div className="spread small">
-                <dt className="muted">Spider Web</dt>
-                <dd style={{ margin: 0 }}>{snapshot.room.settings.spiderSeconds}s</dd>
-              </div>
-            ) : null}
-            {snapshot.room.settings.mode === "hopper" || snapshot.room.settings.mode === "party" ? (
-              <div className="spread small">
-                <dt className="muted">Hopper</dt>
-                <dd style={{ margin: 0 }}>{snapshot.room.settings.hopperSeconds}s</dd>
-              </div>
-            ) : null}
-          </dl>
-
-          <p className="hint" role="status">
-            {snapshot.you.isHost
-              ? "Settings freeze when you start. You can still rematch afterwards."
+          <p className="hint lobby-host-note">
+            {isHost
+              ? "Changes apply immediately. Starting the match freezes them."
               : "The host starts when everyone is ready."}
           </p>
-        </section>
-      </aside>
+        </aside>
+      </div>
+
+      <section className="lobby-cta">
+        <div className="lobby-cta-copy">
+          <span className="eyebrow">{isHost ? "Ready when you are" : "Take your seat"}</span>
+          <p>
+            {isHost
+              ? (startReason ?? "Everyone is ready. The tunnel is waiting.")
+              : snapshot.you.ready
+                ? "You're ready. Waiting for the host to start."
+                : "Mark ready so the host can start."}
+          </p>
+        </div>
+        {isHost ? (
+          <button
+            type="button"
+            className="btn btn-primary btn-lg lobby-start"
+            disabled={!canStart || pending}
+            onClick={() => send({ type: "match:start" })}
+            title={startReason ?? "Start the match"}
+          >
+            Start match
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={`btn btn-lg lobby-start ${snapshot.you.ready ? "btn-secondary" : "btn-primary"}`}
+            aria-pressed={snapshot.you.ready}
+            disabled={pending}
+            onClick={() => send({ type: "room:ready", ready: !snapshot.you.ready })}
+          >
+            {snapshot.you.ready ? "Ready — tap to undo" : "I'm ready"}
+          </button>
+        )}
+      </section>
     </div>
   );
 }

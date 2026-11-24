@@ -5,7 +5,7 @@
 
 export const GAME_TITLE = "Colony";
 export const GAME_TAGLINE = "Quick answers. Clever connections. One room.";
-export const CONTENT_VERSION = "2026.11.3";
+export const CONTENT_VERSION = "2026.11.5";
 export const PROTOCOL_VERSION = 1;
 
 export type ModeId = "party" | "anthill" | "beehive" | "spider" | "hopper";
@@ -288,6 +288,8 @@ export type RoomSettings = {
   packs: string[];
   spiderSeconds: 60 | 90 | 120;
   hopperSeconds: 15 | 20 | 30;
+  /** Which minigames the Party playlist may draw from. */
+  partyModes: PlayableMode[];
 };
 
 export const DEFAULT_SETTINGS: RoomSettings = {
@@ -298,4 +300,5 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   packs: ["all"],
   spiderSeconds: 90,
   hopperSeconds: 20,
+  partyModes: [...PLAYABLE_MODES],
 };

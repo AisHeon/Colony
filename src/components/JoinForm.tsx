@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { readNickname, rememberNickname } from "./HomeEntry";
+import { readSkin } from "./skins";
 
 export function JoinForm({ initialCode = "" }: { initialCode?: string }) {
   const [code, setCode] = useState(initialCode);
@@ -40,7 +41,7 @@ export function JoinForm({ initialCode = "" }: { initialCode?: string }) {
       const res = await fetch(`/api/rooms/${clean}/join`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code: clean, nickname: nickname.trim() }),
+        body: JSON.stringify({ code: clean, nickname: nickname.trim(), avatar: readSkin() }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {

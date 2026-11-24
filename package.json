@@ -12,7 +12,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "content:verify": "tsx scripts/verify-content.mts",
-    "content:import": "tsx scripts/import-content.mts",
+    "content:import": "tsx scripts/import-prompts.ts",
+    "content:import:json": "tsx scripts/import-content.mts",
     "test": "tsx --test tests/*.test.ts",
     "test:engine": "node --import tsx --conditions react-server scripts/engine-smoke.mts",
     "test:shared": "node --import tsx --conditions react-server scripts/shared-state-smoke.mts"
