@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Snapshot } from "@/lib/game/types";
 import { Feedback, Timer } from "@/components/ui";
 import type { IntentAck, IntentBody } from "@/components/useRoom";
@@ -19,18 +19,35 @@ export function Hopper({
 }) {
   const round = snapshot.round!;
   const hopper = round.hopper;
-  const [input, setInput] = useState("");
+  // Uncontrolled on purpose: text typed before hydration must survive it and be
+  // readable at submit time.
+  const [hasText, setHasText] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const submit = useCallback(
+    (raw?: string) => {
+      const field = inputRef.current;
+      const text = (raw ?? field?.value ?? "").trim();
+      if (!text) {
+        field?.focus();
+        return;
+      }
+      if (field) field.value = "";
+      setHasText(false);
+      field?.focus();
+      void send({ type: "answer:submit", text, roundId: round.id });
+    },
+    [round.id, send],
+  );
+
+  useEffect(() => {
+    const field = inputRef.current;
+    if (field && field.value.trim()) setHasText(true);
+  }, []);
+
   if (!hopper) return null;
 
   const totalMs = (snapshot.room.settings.hopperSeconds ?? 20) * 1000;
-
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
-    const text = input.trim();
-    if (!text) return;
-    setInput("");
-    void send({ type: "answer:submit", text, roundId: round.id });
-  }
 
   return (
     <div className="game-grid">
@@ -47,15 +64,21 @@ export function Hopper({
               : "Save one answer. Popular answers score more — matching other players is fine."}
           </div>
 
-          <form className="answer-form" onSubmit={submit}>
+          {/* Not a <form>: an implicit submit before hydration would navigate away. */}
+          <div className={`answer-form${hasText ? " is-ready" : ""}`}>
             <label className="sr-only" htmlFor="hopper-answer">
               Your answer
             </label>
             <input
               id="hopper-answer"
+              ref={inputRef}
               className="input input-lg grow"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
+              onChange={(event) => setHasText(event.currentTarget.value.trim().length > 0)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+                event.preventDefault();
+                submit(event.currentTarget.value);
+              }}
               placeholder={hopper.mySaved ? "Replace your saved answer" : "Your most popular answer"}
               autoComplete="off"
               autoCorrect="off"
@@ -65,10 +88,16 @@ export function Hopper({
               maxLength={120}
               autoFocus
             />
-            <button className="btn btn-primary" type="submit" disabled={!input.trim() || pending}>
+            <button
+              className="btn btn-primary"
+              type="button"
+              data-answer-send=""
+              onClick={() => submit(inputRef.current?.value ?? "")}
+              disabled={!hasText || pending}
+            >
               {hopper.mySaved ? "Change" : "Save"}
             </button>
-          </form>
+          </div>
 
           <Feedback feedback={snapshot.feedback} />
 

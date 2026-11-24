@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TIMERS } from "@/lib/config";
 import type { Snapshot } from "@/lib/game/types";
 import { Avatar, Feedback, Timer } from "@/components/ui";
@@ -20,7 +20,14 @@ export function Beehive({
 }) {
   const round = snapshot.round!;
   const hive = round.beehive;
-  const [input, setInput] = useState("");
+  // Uncontrolled on purpose: text typed before hydration must survive it and be
+  // readable at submit time.
+  const [hasText, setHasText] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    const field = inputRef.current;
+    if (field && field.value.trim()) setHasText(true);
+  }, []);
   if (!hive) return null;
 
   const me = snapshot.you.memberId;
@@ -31,11 +38,13 @@ export function Beehive({
     .filter(Boolean) as Snapshot["members"];
   const count = Math.max(1, seats.length);
 
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
-    const text = input.trim();
+  function submit(raw?: string) {
+    const field = inputRef.current;
+    const text = (raw ?? field?.value ?? "").trim();
     if (!text || !isMyTurn) return;
-    setInput("");
+    if (field) field.value = "";
+    setHasText(false);
+    field?.focus();
     void send({
       type: "answer:submit",
       text,
@@ -100,15 +109,21 @@ export function Beehive({
             })}
           </div>
 
-          <form className="answer-form" onSubmit={submit}>
+          {/* Not a <form>: an implicit submit before hydration would navigate away. */}
+          <div className={`answer-form${hasText ? " is-ready" : ""}`}>
             <label className="sr-only" htmlFor="beehive-answer">
               Your answer
             </label>
             <input
               id="beehive-answer"
+              ref={inputRef}
               className="input input-lg grow"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
+              onChange={(event) => setHasText(event.currentTarget.value.trim().length > 0)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+                event.preventDefault();
+                submit(event.currentTarget.value);
+              }}
               placeholder={isMyTurn ? "Your unused answer" : "Wait for your turn"}
               disabled={!isMyTurn}
               autoComplete="off"
@@ -119,10 +134,16 @@ export function Beehive({
               maxLength={120}
               autoFocus
             />
-            <button className="btn btn-primary" type="submit" disabled={!isMyTurn || !input.trim() || pending}>
+            <button
+              className="btn btn-primary"
+              type="button"
+              data-answer-send=""
+              onClick={() => submit(inputRef.current?.value ?? "")}
+              disabled={!isMyTurn || !hasText || pending}
+            >
               Answer
             </button>
-          </form>
+          </div>
 
           <Feedback feedback={snapshot.feedback} />
 

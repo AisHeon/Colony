@@ -1258,6 +1258,18 @@ a:hover {
   font-size: 18px;
   text-transform: uppercase;
 }
+/* Feedback from the very first character: this is pure CSS, so it also works in
+   the window where the server-rendered room is visible but React is not hydrated. */
+.answer-form .input {
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.answer-form:has(input:not(:placeholder-shown)) .input {
+  border-color: var(--accent);
+}
+.answer-form:has(input:not(:placeholder-shown)) .answer-send:not(:disabled) {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
+}
 .answer-status-line {
   display: flex;
   flex-wrap: wrap;

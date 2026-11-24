@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RARITIES, type Rarity } from "@/lib/config";
 import type { Snapshot } from "@/lib/game/types";
 import { formatScore } from "@/lib/scoring";
@@ -41,10 +41,17 @@ export function Anthill({
   offset: number;
 }) {
   const round = snapshot.round!;
-  const [input, setInput] = useState("");
+  // The field is deliberately uncontrolled: the room is server-rendered, and text
+  // typed before React hydrates must survive hydration instead of being reset or
+  // silently ignored when the player sends it.
+  const [hasText, setHasText] = useState(false);
   const [local, setLocal] = useState<LocalAnswer[]>([]);
   const [moment, setMoment] = useState<RareMoment | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const sendRef = useRef(send);
+  sendRef.current = send;
+  const roundIdRef = useRef(round.id);
+  roundIdRef.current = round.id;
 
   const mine = round.prompt.myAnswers ?? [];
   const myTotal = round.anthill?.leaderboard.find((row) => row.memberId === snapshot.you.memberId)?.total ?? 0;
@@ -56,11 +63,11 @@ export function Anthill({
     (answer) => answer.status !== "accepted" || !mine.some((entry) => entry.entityId === answer.entityId),
   );
 
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
-    const text = input.trim();
+  const submitText = useCallback((raw: string) => {
+    const text = raw.trim();
+    const field = inputRef.current;
     if (!text) {
-      inputRef.current?.focus();
+      field?.focus();
       return;
     }
     const key = makeKey();
@@ -68,10 +75,11 @@ export function Anthill({
     // Optimistic card: it is on screen before the request leaves the browser.
     const optimistic: LocalAnswer = { key, text, status: "pending" };
     setLocal((previous) => [optimistic, ...previous].slice(0, 14));
-    setInput("");
-    inputRef.current?.focus();
+    if (field) field.value = "";
+    setHasText(false);
+    field?.focus();
 
-    void send({ type: "answer:submit", text, roundId: round.id }).then((ack) => {
+    void sendRef.current({ type: "answer:submit", text, roundId: roundIdRef.current }).then((ack) => {
       if (!ack) {
         setLocal((previous) =>
           previous.map((answer) =>
@@ -129,6 +137,30 @@ export function Anthill({
         );
       }
     });
+  }, []);
+
+  useEffect(() => {
+    // The pre-hydration boot script buffers an answer sent before React was
+    // listening. Pick it up, and hand keystrokes back to React from now on.
+    const globals = window as unknown as {
+      __colonyHydrated?: boolean;
+      __colonyEarlyAnswer?: string | null;
+    };
+    globals.__colonyHydrated = true;
+    const early = globals.__colonyEarlyAnswer ?? null;
+    globals.__colonyEarlyAnswer = null;
+    if (early) {
+      submitText(early);
+      return;
+    }
+    const field = inputRef.current;
+    if (field && field.value.trim()) setHasText(true);
+  }, [submitText]);
+
+  function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    submitText(event.currentTarget.value);
   }
 
   return (
@@ -140,7 +172,9 @@ export function Anthill({
           scope={round.prompt.scope}
           timer={<Timer endsAt={round.endsAt} offset={offset} totalMs={30_000} label="Anthill time remaining" />}
         >
-          <form className="answer-form" onSubmit={submit}>
+          {/* Not a <form>: before hydration an implicit submit would navigate
+              away and throw the typed answer away. */}
+          <div className={`answer-form${hasText ? " is-ready" : ""}`}>
             <label className="sr-only" htmlFor="anthill-answer">
               Your answer
             </label>
@@ -148,8 +182,8 @@ export function Anthill({
               id="anthill-answer"
               ref={inputRef}
               className="input answer-input"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
+              onChange={(event) => setHasText(event.currentTarget.value.trim().length > 0)}
+              onKeyDown={onKeyDown}
               placeholder="Type it. Send it. Find out instantly."
               autoComplete="off"
               autoCorrect="off"
@@ -159,10 +193,15 @@ export function Anthill({
               maxLength={120}
               autoFocus
             />
-            <button className="btn btn-primary answer-send" type="submit">
+            <button
+              className="btn btn-primary answer-send"
+              type="button"
+              data-answer-send=""
+              onClick={() => submitText(inputRef.current?.value ?? "")}
+            >
               Send
             </button>
-          </form>
+          </div>
 
           <div className="answer-status-line">
             <span>
@@ -171,7 +210,9 @@ export function Anthill({
             <span aria-live="polite">
               {pendingCount
                 ? `${pendingCount} checking…`
-                : "Verdict appears the moment the judge answers"}
+                : hasText
+                  ? "Ready — press Enter to send"
+                  : "Verdict appears the moment the judge answers"}
             </span>
           </div>
 
