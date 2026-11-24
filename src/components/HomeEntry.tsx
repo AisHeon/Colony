@@ -106,14 +106,8 @@ export function HomeEntry() {
   }
 
   return (
-    <div className="lobby-frame">
-      <div className="lobby-bar">
-        <strong>Colony</strong>
-        <span>Private lobby</span>
-        <span className="lobby-bar-note">Nickname only · no account</span>
-      </div>
-
-      <div className="lobby-frame-body">
+    <>
+      <div className="lobby-stage">
         <div className="lobby-bug">
           <div className="lobby-bug-arch" aria-hidden="true">
             <div className="lobby-bug-dome">
@@ -133,7 +127,6 @@ export function HomeEntry() {
               spellCheck={false}
             />
           </label>
-          <p className="lobby-bug-hint">This is the name the colony sees.</p>
         </div>
 
         <div className="lobby-panel">
@@ -143,17 +136,23 @@ export function HomeEntry() {
             <label className="sr-only" htmlFor="lobby-code">
               Lobby code
             </label>
-            <input
-              id="lobby-code"
-              className="lobby-code"
-              value={code}
-              onChange={(event) => setCode(event.target.value.toUpperCase())}
-              placeholder="ABCDEF"
-              maxLength={12}
-              autoCapitalize="characters"
-              autoComplete="off"
-              spellCheck={false}
-            />
+            <div className="lobby-code-field">
+              <input
+                id="lobby-code"
+                className="lobby-code"
+                value={code}
+                onChange={(event) => setCode(event.target.value.toUpperCase())}
+                maxLength={12}
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              {code === "" ? (
+                <span className="lobby-code-hint" aria-hidden="true">
+                  ABCDEF
+                </span>
+              ) : null}
+            </div>
             <button className="lobby-btn" type="submit" disabled={busy !== null}>
               {busy === "join" ? "Joining…" : "Join"}
             </button>
@@ -195,13 +194,12 @@ export function HomeEntry() {
               {error}
             </p>
           ) : null}
-
-          <p className="lobby-legal">
-            By playing you agree to the <Link href="/terms">terms</Link> and{" "}
-            <Link href="/privacy">privacy note</Link>.
-          </p>
         </div>
       </div>
-    </div>
+
+      <p className="lobby-legal">
+        Nickname only · <Link href="/terms">terms</Link> · <Link href="/privacy">privacy</Link>
+      </p>
+    </>
   );
 }
