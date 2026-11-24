@@ -104,6 +104,49 @@ async function findMember(q: QueryFn, roomId: string, guestId: string): Promise<
   return (rows[0] as unknown as MemberRow) ?? null;
 }
 
+type IntentContext = {
+  room: RoomRow;
+  member: MemberRow | null;
+  match: MatchRow | null;
+  round: RoundRow | null;
+};
+
+/**
+ * Room, seat, latest match and current round in a single statement. Each of
+ * those used to be its own round trip, and every round trip carries the full
+ * latency of the hosted database.
+ */
+async function loadIntentContext(q: QueryFn, code: string, guestId: string): Promise<IntentContext | null> {
+  const rows = await q<Row>(
+    `select row_to_json(r) as room,
+            case when mem.id is null then null else row_to_json(mem) end as member,
+            case when m.id is null then null else row_to_json(m) end as match,
+            case when rd.id is null then null else row_to_json(rd) end as round
+       from room r
+       left join room_member mem
+         on mem.room_id = r.id and mem.guest_id = $2 and mem.left_at is null
+       left join lateral (
+         select * from match where room_id = r.id order by started_at desc limit 1
+       ) m on true
+       left join lateral (
+         select * from round where match_id = m.id and finalized_at is null order by idx asc limit 1
+       ) rd on true
+      where r.code = $1
+      order by mem.joined_at desc nulls last
+      limit 1
+      for update of r`,
+    [code, guestId],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    room: row.room as unknown as RoomRow,
+    member: (row.member as unknown as MemberRow | null) ?? null,
+    match: (row.match as unknown as MatchRow | null) ?? null,
+    round: (row.round as unknown as RoundRow | null) ?? null,
+  };
+}
+
 export async function resolveMember(db: Db, roomId: string, guestId: string): Promise<MemberRow | null> {
   return db.transaction((q) => findMember(q, roomId, guestId));
 }
@@ -145,8 +188,14 @@ export async function applyIntent(
   }
 
   return db.transaction(async (q) => {
-    const room = await loadRoomForUpdate(q, code);
-    const member = await findMember(q, room.id, guestId);
+    const context = await loadIntentContext(q, code, guestId);
+    if (!context) {
+      throw new GameError("ROOM_NOT_FOUND", "We couldn't find an active room with that code.", 404);
+    }
+    const { room, member } = context;
+    if (room.status === "closed") {
+      throw new GameError("ROOM_NOT_FOUND", "That room has closed. Create a new one.", 404);
+    }
     if (!member) throw new GameError("NOT_IN_ROOM", "Your seat in this room has ended. Join again.", 403);
 
     // Presence is refreshed by the stream; skip the write when it is fresh.
@@ -156,7 +205,7 @@ export async function applyIntent(
     if (needsTick(room.id, now)) await tickRoom(q, room, now);
 
     const handler = handlers[intent.type] as (ctx: unknown) => Promise<IntentResult>;
-    const outcome = await handler({ q, room, member, intent, now, requestId });
+    const outcome = await handler({ q, room, member, intent, now, requestId, preloaded: context });
 
     // One write covers the activity stamp and the version bump that tells every
     // connected stream to push the new state.
@@ -209,6 +258,7 @@ type Ctx<T> = {
   intent: T;
   now: number;
   requestId: string;
+  preloaded?: IntentContext;
 };
 
 const handlers: { [K in Intent["type"]]: (ctx: Ctx<Extract<Intent, { type: K }>>) => Promise<IntentResult> } = {
@@ -262,8 +312,8 @@ const handlers: { [K in Intent["type"]]: (ctx: Ctx<Extract<Intent, { type: K }>>
     return feedback("OK", "Moving on.");
   },
 
-  "answer:submit": async ({ q, room, member, intent, now, requestId }) =>
-    submitAnswer(q, room, member, intent, requestId, now),
+  "answer:submit": async ({ q, room, member, intent, now, requestId, preloaded }) =>
+    submitAnswer(q, room, member, intent, requestId, now, preloaded),
 
   "spider:draft": async ({ q, room, member, intent, now }) => submitSpiderDraft(q, room, member, intent, now),
 
@@ -381,6 +431,7 @@ async function submitAnswer(
   intent: Extract<Intent, { type: "answer:submit" }>,
   requestId: string,
   now: number,
+  preloaded?: { match: MatchRow | null; round: RoundRow | null },
 ): Promise<IntentResult> {
   const raw = cleanAnswer(intent.text ?? "");
   if (!raw) return feedback("INVALID_PAYLOAD", "Enter an answer.");
@@ -389,14 +440,14 @@ async function submitAnswer(
   }
   if (member.spectator) throw new GameError("SPECTATOR", "Spectators can't submit answers.");
 
-  const match = await currentMatch(q, room.id);
+  const match = preloaded ? preloaded.match : await currentMatch(q, room.id);
   if (!match || match.status !== "active") return feedback("ROUND_CLOSED", "There is no active round.");
   if (!match.config.participants.includes(member.id)) return feedback("ROUND_CLOSED", "You're spectating this match.");
   if (await rateLimited(q, member.id, now)) {
     return feedback("RATE_LIMITED", "Slow down for a moment — your next answer will go through.");
   }
 
-  const round = await activeRound(q, match.id);
+  const round = preloaded ? preloaded.round : await activeRound(q, match.id);
   if (!round) return feedback("ROUND_CLOSED", "This round has ended.");
   if (intent.roundId && intent.roundId !== round.id) return feedback("ROUND_CLOSED", "That round has ended.");
   if (round.phase === "countdown") return feedback("ROUND_CLOSED", "The round hasn't started yet.");
