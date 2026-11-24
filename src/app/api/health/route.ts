@@ -9,6 +9,7 @@ export async function GET() {
   const started = Date.now();
   try {
     const db = await getDb();
+    await db.probe();
     const counts = await db.one<{ prompts: number; entities: number; puzzles: number; questions: number }>(
       `select
          (select count(*) from prompt) as prompts,
@@ -20,6 +21,7 @@ export async function GET() {
       {
         ok: true,
         database: db.kind,
+        persistence: "writable",
         contentVersion: CONTENT_VERSION,
         counts: {
           prompts: Number(counts?.prompts ?? 0),

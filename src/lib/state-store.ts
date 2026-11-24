@@ -118,6 +118,8 @@ export interface StateStore {
   read(): Promise<StoredState | null>;
   /** Returns the new ETag. Throws StateConflictError when `etag` is stale. */
   write(state: SharedState, etag: string | null): Promise<string>;
+  /** Small independent write used by the health endpoint. */
+  probe?(): Promise<void>;
 }
 
 const STATE_PATH = "colony/shared-state.json";
@@ -151,6 +153,17 @@ export class BlobStateStore implements StateStore {
       return { state: JSON.parse(text) as SharedState, etag: meta.etag };
     }
     throw new Error("Shared state changed while it was being read; retry the request.");
+  }
+
+  async probe(): Promise<void> {
+    const { put } = await import("@vercel/blob");
+    await put("colony/health-probe.txt", `ok:${Date.now()}`, {
+      access: "private",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      contentType: "text/plain",
+      cacheControlMaxAge: 60,
+    });
   }
 
   async write(state: SharedState, etag: string | null): Promise<string> {
@@ -192,6 +205,10 @@ export class MemoryStateStore implements StateStore {
 
   async read() {
     return this.stored ? { state: structuredClone(this.stored.state), etag: this.stored.etag } : null;
+  }
+
+  async probe() {
+    // Memory is writable by definition; tests can still exercise /api/health.
   }
 
   async write(state: SharedState, etag: string | null) {

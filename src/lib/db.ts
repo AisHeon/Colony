@@ -24,6 +24,8 @@ export interface Db {
   transaction: <T>(fn: (q: QueryFn) => Promise<T>) => Promise<T>;
   /** Multi-statement SQL (schema/migrations). No parameters. */
   exec: (sql: string) => Promise<void>;
+  /** Performs a real, small write so health never reports a read-only store as healthy. */
+  probe: () => Promise<void>;
   kind: "postgres" | "pglite" | "blob";
 }
 
@@ -56,6 +58,12 @@ function wrap(pool: PgPoolLike, kind: Db["kind"]): Db {
     one: async <T extends Row = Row>(sql: string, params: unknown[] = []): Promise<T | null> => {
       const res = await pool.query(sql, params);
       return ((res.rows[0] as T | undefined) ?? null) as T | null;
+    },
+    probe: async () => {
+      await pool.query(
+        "insert into health_probe (id, checked_at) values ('health', $1) on conflict (id) do update set checked_at = excluded.checked_at",
+        [Date.now()],
+      );
     },
     transaction: async <T>(fn: (q: QueryFn) => Promise<T>) => {
       const client = await pool.connect();
@@ -105,6 +113,12 @@ function wrapPglite(pglite: PgliteLike, kind: Db["kind"] = "pglite"): Db {
     one: async <T extends Row = Row>(sql: string, params: unknown[] = []): Promise<T | null> => {
       const res = await pglite.query(sql, params as never[]);
       return ((res.rows[0] as T | undefined) ?? null) as T | null;
+    },
+    probe: async () => {
+      await pglite.query(
+        "insert into health_probe (id, checked_at) values ('health', $1) on conflict (id) do update set checked_at = excluded.checked_at",
+        [Date.now()],
+      );
     },
     transaction: async <T>(fn: (q: QueryFn) => Promise<T>) => {
       return (await pglite.transaction(async (tx) => {
@@ -164,6 +178,10 @@ export async function createSharedDb(store: StateStore): Promise<Db> {
 
   return {
     kind: "blob",
+    probe: async () => {
+      if (!store.probe) throw new Error("State store does not support a write probe");
+      await store.probe();
+    },
     exec: (sql: string) =>
       enqueue(async () => {
         await sync(0);

@@ -253,6 +253,11 @@ create table if not exists hopper_bucket (
 );
 create index if not exists hopper_bucket_question on hopper_bucket (question_id);
 
+create table if not exists health_probe (
+  id text primary key,
+  checked_at bigint not null
+);
+
 create table if not exists content_meta (
   key text primary key,
   value jsonb not null
