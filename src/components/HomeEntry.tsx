@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import { MODES } from "@/lib/config";
 
 const NICK_KEY = "colony:nickname";
+const ROUND_CHOICES = [4, 8, 12] as const;
 
 export function readNickname(): string {
   if (typeof window === "undefined") return "";
@@ -29,7 +29,7 @@ export function HomeEntry() {
   const [nickname, setNickname] = useState("");
   const [code, setCode] = useState("");
   const [familyFriendly, setFamilyFriendly] = useState(true);
-  const [quickMatch, setQuickMatch] = useState(false);
+  const [rounds, setRounds] = useState<number>(8);
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +37,6 @@ export function HomeEntry() {
     setNickname(readNickname());
   }, []);
 
-  const rounds = quickMatch ? 4 : MODES.party.defaultRounds;
   const bugName = nickname.trim() || "Place Holder Bug";
 
   async function createRoom() {
@@ -106,100 +105,110 @@ export function HomeEntry() {
   }
 
   return (
-    <>
-      <div className="lobby-stage">
-        <div className="lobby-bug">
-          <div className="lobby-bug-arch" aria-hidden="true">
-            <div className="lobby-bug-dome">
-              <span className="lobby-bug-label">{bugName}</span>
-            </div>
+    <div className="lobby-stage">
+      <div className="lobby-bug">
+        <div className="lobby-bug-perch">
+          <div className="lobby-bug-arch">
+            <div className="lobby-bug-dome" aria-hidden="true" />
+            <Image
+              src="/art/jungle/hero-ant.webp"
+              alt=""
+              width={600}
+              height={507}
+              priority
+              className="lobby-bug-photo"
+            />
+            <span className="lobby-bug-label">{bugName}</span>
           </div>
-          <label className="lobby-name-field">
-            <span>Name</span>
+        </div>
+        <label className="lobby-name-field">
+          <span>Name</span>
+          <input
+            className="lobby-name-input"
+            value={nickname}
+            onChange={(event) => setNickname(event.target.value)}
+            maxLength={16}
+            placeholder="Chedward"
+            autoComplete="nickname"
+            autoCapitalize="words"
+            spellCheck={false}
+          />
+        </label>
+      </div>
+
+      <div className="lobby-card">
+        <h2>Private Lobby</h2>
+
+        <form className="lobby-form" onSubmit={joinRoom}>
+          <label className="sr-only" htmlFor="lobby-code-input">
+            Lobby code
+          </label>
+          <div className="lobby-code-slot">
             <input
-              className="lobby-name-input"
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              maxLength={16}
-              placeholder="Chedward"
-              autoComplete="nickname"
-              autoCapitalize="words"
+              id="lobby-code-input"
+              className="lobby-code-input"
+              value={code}
+              onChange={(event) => setCode(event.target.value.toUpperCase())}
+              maxLength={12}
+              autoCapitalize="characters"
+              autoComplete="off"
               spellCheck={false}
             />
+            {code === "" ? (
+              <span className="lobby-code-ghost" aria-hidden="true">
+                ABCDEF
+              </span>
+            ) : null}
+          </div>
+          <button className="lobby-btn" type="submit" disabled={busy !== null}>
+            {busy === "join" ? "Joining…" : "Join"}
+          </button>
+        </form>
+
+        <h3>Create Lobby</h3>
+
+        <div className="lobby-settings">
+          <div className="lobby-setting">
+            <span className="lobby-setting-label">Rounds</span>
+            <div className="lobby-seg" role="group" aria-label="Rounds">
+              {ROUND_CHOICES.map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  className={`lobby-seg-btn${rounds === count ? " is-on" : ""}`}
+                  aria-pressed={rounds === count}
+                  onClick={() => setRounds(count)}
+                >
+                  {count}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="lobby-toggle">
+            <span className="lobby-toggle-copy">
+              <span>Family friendly</span>
+              <span className="lobby-toggle-note">Reviewed prompts only</span>
+            </span>
+            <input
+              type="checkbox"
+              checked={familyFriendly}
+              onChange={(event) => setFamilyFriendly(event.target.checked)}
+            />
+            <span className="lobby-switch" aria-hidden="true" />
           </label>
         </div>
 
-        <div className="lobby-panel">
-          <h2>Private Lobby</h2>
+        <button className="lobby-btn" type="button" onClick={createRoom} disabled={busy !== null}>
+          {busy === "create" ? "Opening…" : "Create"}
+        </button>
 
-          <form className="lobby-form" onSubmit={joinRoom}>
-            <label className="sr-only" htmlFor="lobby-code">
-              Lobby code
-            </label>
-            <div className="lobby-code-field">
-              <input
-                id="lobby-code"
-                className="lobby-code"
-                value={code}
-                onChange={(event) => setCode(event.target.value.toUpperCase())}
-                maxLength={12}
-                autoCapitalize="characters"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              {code === "" ? (
-                <span className="lobby-code-hint" aria-hidden="true">
-                  ABCDEF
-                </span>
-              ) : null}
-            </div>
-            <button className="lobby-btn" type="submit" disabled={busy !== null}>
-              {busy === "join" ? "Joining…" : "Join"}
-            </button>
-          </form>
-
-          <h3>Create Lobby</h3>
-
-          <div className="lobby-toggles">
-            <label className="lobby-toggle">
-              <span>Family friendly</span>
-              <input
-                type="checkbox"
-                checked={familyFriendly}
-                onChange={(event) => setFamilyFriendly(event.target.checked)}
-              />
-              <span className="lobby-switch" aria-hidden="true" />
-            </label>
-            <label className="lobby-toggle">
-              <span>Quick match</span>
-              <input
-                type="checkbox"
-                checked={quickMatch}
-                onChange={(event) => setQuickMatch(event.target.checked)}
-              />
-              <span className="lobby-switch" aria-hidden="true" />
-            </label>
-          </div>
-
-          <button className="lobby-btn" type="button" onClick={createRoom} disabled={busy !== null}>
-            {busy === "create" ? "Opening…" : "Create"}
-          </button>
-
-          <p className="lobby-meta">
-            Party mix · {rounds} rounds · {familyFriendly ? "family friendly" : "standard"}
+        {error ? (
+          <p className="lobby-error" role="alert">
+            {error}
           </p>
-
-          {error ? (
-            <p className="lobby-error" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </div>
+        ) : null}
       </div>
-
-      <p className="lobby-legal">
-        Nickname only · <Link href="/terms">terms</Link> · <Link href="/privacy">privacy</Link>
-      </p>
-    </>
+    </div>
   );
 }

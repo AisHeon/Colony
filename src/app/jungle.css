@@ -11,6 +11,7 @@
   --jungle-light: #7cc242;
   --jungle-ink: #f6f8ee;
   --jungle-serif: var(--font-jungle), "Playfair Display", Georgia, "Times New Roman", serif;
+  position: relative;
   min-height: 100svh;
   background: var(--jungle-page);
   color: var(--jungle-ink);
@@ -35,15 +36,86 @@ body:has(.jungle-home) .macro-world {
   height: 100vh;
   height: 100svh;
   min-height: 520px;
-  max-height: 1080px;
   overflow: hidden;
   isolation: isolate;
 }
 
+/* The art is laid out in its own 16:9 frame so the ant and the cricket can sit
+   exactly where the plate has room for them, at every viewport shape. */
+.jungle-hero-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.jungle-hero-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, calc(100svh * 1.7778));
+  aspect-ratio: 16 / 9;
+  transform: translate(-50%, -50%);
+}
+
 .jungle-hero-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  object-position: center 42%;
-  z-index: -1;
+}
+
+.jungle-hero-bug {
+  position: absolute;
+  bottom: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.jungle-hero-bug img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.jungle-hero-bug.is-ant {
+  left: 0;
+  width: 25%;
+}
+
+.jungle-hero-bug.is-cricket {
+  right: 0;
+  width: 26.583%;
+}
+
+.jungle-hero-bug.is-ant img {
+  animation: ant-appear 1150ms cubic-bezier(0.22, 1.05, 0.36, 1) 260ms both;
+}
+
+.jungle-hero-bug.is-cricket img {
+  animation: cricket-appear 1150ms cubic-bezier(0.22, 1.05, 0.36, 1) 620ms both;
+}
+
+@keyframes ant-appear {
+  from {
+    opacity: 0;
+    transform: translate(-18%, 26%) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+@keyframes cricket-appear {
+  from {
+    opacity: 0;
+    transform: translate(16%, 30%) rotate(5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg);
+  }
 }
 
 .jungle-title {
@@ -157,35 +229,56 @@ body:has(.jungle-home) .macro-world {
   flex: 0 0 auto;
 }
 
+.lobby-bug-perch {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
 .lobby-bug-arch {
   position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   width: var(--arch);
   aspect-ratio: 0.69;
   overflow: hidden;
   border-radius: 999px 999px calc(var(--arch) * 0.05) calc(var(--arch) * 0.05);
-  background: #030303;
+  background: radial-gradient(120% 90% at 50% 18%, #10200f 0%, #040704 62%, #000 100%);
+  box-shadow: inset 0 -46px 70px rgba(0, 0, 0, 0.6);
   container-type: inline-size;
 }
 
 .lobby-bug-dome {
-  display: grid;
-  place-items: center;
+  position: absolute;
+  left: 7%;
+  bottom: 0;
   width: 86%;
-  height: 36%;
-  padding: 0 6%;
+  height: 34%;
   border-radius: 999px 999px 0 0;
-  background: linear-gradient(180deg, #453e38 0%, #2b2622 100%);
+  background: linear-gradient(180deg, #4a423b 0%, #2b2622 100%);
+}
+
+.lobby-bug-photo {
+  position: absolute;
+  left: 50%;
+  bottom: 24%;
+  width: 92%;
+  height: auto;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.5));
+  animation:
+    ant-in 900ms cubic-bezier(0.22, 1.1, 0.36, 1) 220ms both,
+    ant-idle 7s ease-in-out 1.6s infinite;
 }
 
 .lobby-bug-label {
+  position: absolute;
+  right: 0;
+  bottom: 6%;
+  left: 0;
+  z-index: 2;
   overflow: hidden;
-  max-width: 100%;
   color: #f4f1e8;
   font-family: var(--jungle-serif);
-  font-size: 7.8cqw;
+  font-size: 6.4cqw;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -229,7 +322,7 @@ body:has(.jungle-home) .macro-world {
 
 /* ---- the notched panel */
 
-.lobby-panel {
+.lobby-card {
   --notch: clamp(14px, 1.5vw, 22px);
   container-type: inline-size;
   display: grid;
@@ -260,16 +353,18 @@ body:has(.jungle-home) .macro-world {
       no-repeat;
 }
 
-.lobby-panel h2 {
+.lobby-card h2 {
   margin: 0;
   color: #f7f7ee;
   font-family: var(--jungle-serif);
   font-size: 10.3cqw;
   font-weight: 400;
+  letter-spacing: 0.023em;
+  padding-left: 0.023em;
   text-align: center;
 }
 
-.lobby-panel h3 {
+.lobby-card h3 {
   margin: 1.4cqw 0 0;
   color: #f4f5ea;
   font-family: var(--jungle-serif);
@@ -285,24 +380,25 @@ body:has(.jungle-home) .macro-world {
   justify-items: stretch;
 }
 
-.lobby-code-field {
+.lobby-code-slot {
   position: relative;
   display: block;
 }
 
-.lobby-code-hint {
+.lobby-code-ghost {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
+  margin-left: 0.037em;
   color: #83c46c;
   font-family: var(--jungle-serif);
   font-size: 20.2cqw;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.037em;
   pointer-events: none;
 }
 
-.lobby-code {
+.lobby-code-input {
   display: block;
   width: 100%;
   padding: 0.04em 0.22em;
@@ -313,11 +409,11 @@ body:has(.jungle-home) .macro-world {
   font-family: var(--jungle-serif);
   font-size: 20.2cqw;
   line-height: 1.45;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.037em;
   text-align: center;
 }
 
-.lobby-code:focus-visible {
+.lobby-code-input:focus-visible {
   outline: 2px solid #cdeab9;
   outline-offset: 2px;
 }
@@ -356,22 +452,81 @@ body:has(.jungle-home) .macro-world {
   box-shadow: 0 1px 0 #4f8d2b;
 }
 
-.lobby-toggles {
+.lobby-settings {
   display: grid;
-  gap: 2.9cqw;
+  gap: 3.4cqw;
+  padding-top: 0.6cqw;
+}
+
+.lobby-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3cqw;
+}
+
+.lobby-setting-label {
+  color: #f2f4e7;
+  font-family: var(--jungle-serif);
+  font-size: 8.8cqw;
+}
+
+.lobby-seg {
+  display: inline-flex;
+  gap: 0.4cqw;
+  padding: 0.55cqw;
+  border: 1px solid #3f7d35;
+  border-radius: 999px;
+  background: #12390f;
+}
+
+.lobby-seg-btn {
+  min-width: 7.2cqw;
+  padding: 0.35cqw 1.5cqw;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #cfe3bf;
+  font-family: var(--jungle-serif);
+  font-size: 7.6cqw;
+  line-height: 1.35;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.lobby-seg-btn:hover:not(.is-on) {
+  background: #1d4f17;
+}
+
+.lobby-seg-btn.is-on {
+  background: var(--jungle-light);
+  color: #10300c;
 }
 
 .lobby-toggle {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 4cqw;
+  justify-content: space-between;
+  gap: 3cqw;
   color: #f2f4e7;
   font-family: var(--jungle-serif);
-  font-size: 9.2cqw;
+  font-size: 8.8cqw;
   cursor: pointer;
   user-select: none;
+}
+
+.lobby-toggle-copy {
+  display: grid;
+  gap: 0.4cqw;
+}
+
+.lobby-toggle-note {
+  color: #a9c99a;
+  font-size: 5.4cqw;
+  letter-spacing: 0.01em;
 }
 
 .lobby-toggle input {
@@ -417,16 +572,6 @@ body:has(.jungle-home) .macro-world {
   outline-offset: 2px;
 }
 
-.lobby-meta {
-  margin: 0;
-  color: #a9c99a;
-  font-family: var(--mono);
-  font-size: 3.5cqw;
-  letter-spacing: 0.08em;
-  text-align: center;
-  text-transform: uppercase;
-}
-
 .lobby-error {
   margin: 0;
   color: #ffe1a8;
@@ -434,25 +579,11 @@ body:has(.jungle-home) .macro-world {
   text-align: center;
 }
 
-.lobby-legal {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  color: #d7e8c8;
-  font-size: 12px;
-  text-align: center;
-  text-shadow: 0 1px 2px rgba(6, 26, 4, 0.4);
-}
-
-.lobby-legal a {
-  color: #eef7e4;
-}
-
 /* -------------------------------------------------------------- footer */
 
 .jungle-footer {
   position: relative;
-  z-index: 1;
+  z-index: 6;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -496,14 +627,6 @@ body:has(.jungle-home) .macro-world {
 /* ------------------------------------------------------------ responsive */
 
 @media (max-width: 860px) {
-  .jungle-hero {
-    max-height: none;
-  }
-
-  .jungle-hero-art {
-    object-position: center 38%;
-  }
-
   .jungle-title {
     top: 44%;
   }
@@ -532,9 +655,10 @@ body:has(.jungle-home) .macro-world {
     --arch: 158px;
   }
 
-  .lobby-panel {
+  .lobby-card {
     width: min(430px, 100%);
   }
+
 
   .jungle-footer {
     justify-content: center;
@@ -548,6 +672,144 @@ body:has(.jungle-home) .macro-world {
 
 @media (prefers-reduced-motion: reduce) {
   .jungle-scroll svg {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------ the creeper */
+
+/* One calm creeper from the canopy to the footer: it is the transition the
+   hero, the lobby and the footer share. */
+.jungle-vine {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  width: clamp(96px, 10vw, 178px);
+  color: #173f11;
+  opacity: 0.52;
+  pointer-events: none;
+  transform-origin: 62% 0;
+  animation: vine-sway 18s ease-in-out infinite;
+}
+
+.jungle-vine-stem {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.jungle-vine-leaf {
+  position: absolute;
+  width: 36%;
+  max-width: 58px;
+  transform: rotate(var(--turn, 0deg)) scale(var(--size, 1));
+}
+
+.jungle-vine-leaf svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: leaf-sway 9s ease-in-out var(--leaf-delay, 0s) infinite;
+}
+
+.jungle-vine-leaf.is-left {
+  left: 4%;
+  transform-origin: 90% 50%;
+}
+
+.jungle-vine-leaf.is-left svg {
+  transform-origin: 90% 50%;
+}
+
+.jungle-vine-leaf.is-right {
+  right: 2%;
+}
+
+.jungle-vine-leaf.is-right svg {
+  transform-origin: 10% 50%;
+}
+
+@media (max-width: 1100px) {
+  .jungle-vine {
+    display: none;
+  }
+}
+
+@keyframes vine-sway {
+  0%,
+  100% {
+    transform: rotate(-0.12deg);
+  }
+  50% {
+    transform: rotate(0.12deg);
+  }
+}
+
+@keyframes leaf-sway {
+  0%,
+  100% {
+    transform: rotate(-2.4deg);
+  }
+  50% {
+    transform: rotate(2.8deg);
+  }
+}
+
+@keyframes ant-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 24px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes ant-idle {
+  0%,
+  100% {
+    transform: translate(-50%, 0) rotate(-0.6deg);
+  }
+  50% {
+    transform: translate(-50%, -3px) rotate(0.8deg);
+  }
+}
+
+@keyframes cricket-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) rotate(-7deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes cricket-hop {
+  0%,
+  58%,
+  74%,
+  100% {
+    transform: translateY(0);
+  }
+  65% {
+    transform: translateY(-8px);
+  }
+  70% {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jungle-vine,
+  .jungle-vine-leaf svg,
+  .lobby-bug-photo,
+  .jungle-hero-bug img {
     animation: none;
   }
 }

@@ -138,7 +138,7 @@ export function RoomClient({ code, initial }: { code: string; initial: Snapshot 
 
   if (loading && !snapshot) {
     return (
-      <div className="shell">
+      <div className="shell jungle-room">
         <header className="site-head">
           <Wordmark />
         </header>
@@ -156,7 +156,7 @@ export function RoomClient({ code, initial }: { code: string; initial: Snapshot 
 
   if (error && !snapshot) {
     return (
-      <div className="shell" style={{ maxWidth: 560 }}>
+      <div className="shell jungle-room" style={{ maxWidth: 560 }}>
         <header className="site-head">
           <Link href="/" aria-label="Colony home">
             <Wordmark />
@@ -183,7 +183,7 @@ export function RoomClient({ code, initial }: { code: string; initial: Snapshot 
 
   if (!snapshot.you.memberId) {
     return (
-      <div className="shell" style={{ maxWidth: 520 }}>
+      <div className="shell jungle-room" style={{ maxWidth: 520 }}>
         <header className="site-head">
           <Link href="/" aria-label="Colony home">
             <Wordmark />
@@ -228,7 +228,7 @@ export function RoomClient({ code, initial }: { code: string; initial: Snapshot 
   const matchFinished = match?.status === "ended";
 
   return (
-    <div className={`game${inLobby ? " is-lobby" : ""}`}>
+    <div className={`game jungle-room${inLobby ? " is-lobby" : ""}`}>
       <header className="game-bar">
         <div className="shell game-bar-inner">
           <Link href="/" className="wordmark" aria-label="Colony home">

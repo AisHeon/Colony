@@ -1,11 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import { Playfair_Display } from "next/font/google";
 import "./globals.css";
 import "./colony.css";
+import "./jungle-room.css";
 import { GAME_TAGLINE, GAME_TITLE } from "@/lib/config";
 import { AgeGate } from "@/components/AgeGate";
 import { MacroWorld } from "@/components/ColonyWorld";
 
 const appOrigin = process.env.NEXT_PUBLIC_APP_ORIGIN || "https://colony-csw.vercel.app";
+
+const display = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-jungle",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(appOrigin),
@@ -48,13 +57,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#1A0F08",
+  themeColor: "#0b2208",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className={display.variable}>
         <MacroWorld />
         <AgeGate />
         {children}

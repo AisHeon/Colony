@@ -1,0 +1,398 @@
+/* ============================================================ JUNGLE ROOM
+   The match screens live in the same world as the home page: canopy green,
+   cream ink, lime buttons, serif headlines. Token overrides do most of the
+   work; the rules below shape the parts that carry the theme.
+   ========================================================================= */
+
+.jungle-room {
+  --soil: #08200a;
+  --soil-deep: #051604;
+  --tunnel: #123f10;
+  --tunnel-2: #174a14;
+  --tunnel-3: #1e5b19;
+  --grass: #7cc242;
+  --dew: #bfe8b0;
+  --amber: #a8e063;
+  --sand: #dbeac6;
+  --bone: #f4f8ea;
+  --leaf: #8fd45a;
+  --fungal: #b6ef7a;
+  --blood: #ff9b7a;
+  --gold: #f2d45c;
+  --terracotta: #d08a5a;
+
+  --bg: #0c2a09;
+  --surface: #174a14;
+  --surface-2: #1d5718;
+  --ink: #f2f7e6;
+  --muted: #b3cfa2;
+  --border: #2f6b27;
+  --border-strong: #4a8f3c;
+  --accent: #a8e063;
+  --accent-ink: #0f2f0b;
+  --accent-soft: #24461a;
+  --danger: #ff9b7a;
+  --danger-soft: #3a1a12;
+  --warn: #f2c14e;
+  --warn-soft: #38300f;
+  --ok: #8fd45a;
+  --ok-soft: #1d3f14;
+
+  --accent-party: #a8e063;
+  --accent-anthill: #8fd45a;
+  --accent-beehive: #f2d45c;
+  --accent-spider: #9fd8e8;
+  --accent-hopper: #b6ef7a;
+
+  --radius-card: 18px;
+  --radius-control: 12px;
+  --shadow-card: 0 12px 28px rgba(3, 16, 2, 0.34);
+  --shadow-pop: 0 20px 42px rgba(3, 16, 2, 0.46);
+
+  --jungle-serif: var(--font-jungle), "Playfair Display", Georgia, "Times New Roman", serif;
+  --display: var(--jungle-serif);
+
+  min-height: 100svh;
+  background:
+    radial-gradient(120% 68% at 50% -10%, #2f7026 0%, #144710 44%, #08210a 100%) fixed,
+    #0b2208;
+  color: var(--ink);
+}
+
+.jungle-room ::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* --------------------------------------------------------------- the frame */
+
+.jungle-room .game-bar {
+  background: rgba(8, 32, 7, 0.78);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+.jungle-room .game-bar .room-code {
+  border-left-color: var(--border);
+  color: var(--accent);
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+}
+
+.jungle-room .game-bar .wordmark span:not(.wordmark-mark) {
+  font-family: var(--jungle-serif);
+  letter-spacing: 0.02em;
+}
+
+.jungle-room .game-main {
+  padding: 22px 0 36px;
+}
+
+/* ----------------------------------------------------------------- surfaces */
+
+.jungle-room .card,
+.jungle-room .prompt-card,
+.jungle-room .notice,
+.jungle-room .card-flat {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: linear-gradient(180deg, rgba(30, 91, 25, 0.86), rgba(16, 54, 14, 0.94));
+  box-shadow: var(--shadow-card);
+}
+
+.jungle-room .card-tight {
+  border-radius: 16px;
+}
+
+.jungle-room .card-flat {
+  background: rgba(9, 34, 7, 0.45);
+  box-shadow: none;
+}
+
+.jungle-room .notice {
+  background: rgba(23, 74, 20, 0.92);
+}
+
+.jungle-room .notice-warn {
+  border-color: var(--warn);
+  background: rgba(56, 48, 15, 0.55);
+}
+
+/* --------------------------------------------------------------- typography */
+
+.jungle-room h1,
+.jungle-room h2,
+.jungle-room h3,
+.jungle-room .prompt-text,
+.jungle-room .countdown,
+.jungle-room .room-code {
+  font-family: var(--jungle-serif);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.jungle-room h1 {
+  line-height: 1.14;
+}
+
+.jungle-room .prompt-text {
+  font-size: clamp(26px, 2.7vw, 40px);
+  line-height: 1.22;
+}
+
+.jungle-room .eyebrow {
+  color: var(--accent);
+  letter-spacing: 0.14em;
+}
+
+.jungle-room .hint,
+.jungle-room .muted {
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- controls */
+
+.jungle-room .btn {
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: rgba(9, 34, 7, 0.55);
+  color: var(--ink);
+  box-shadow: none;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    filter 120ms ease;
+}
+
+.jungle-room .btn:hover:not(:disabled) {
+  background: rgba(30, 91, 25, 0.7);
+}
+
+.jungle-room .btn-primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 4px 0 rgba(6, 26, 4, 0.35);
+}
+
+.jungle-room .btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+  background: var(--accent);
+}
+
+.jungle-room .btn-secondary {
+  border-color: var(--accent);
+  background: transparent;
+  color: var(--accent);
+}
+
+.jungle-room .btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.jungle-room .input,
+.jungle-room .select,
+.jungle-room textarea {
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgba(6, 26, 5, 0.55);
+  color: var(--ink);
+}
+
+.jungle-room .input:focus-visible,
+.jungle-room .select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.jungle-room .badge {
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgba(8, 32, 7, 0.5);
+  color: var(--ink);
+}
+
+.jungle-room .badge-accent {
+  border-color: var(--accent);
+  background: rgba(168, 224, 99, 0.16);
+  color: var(--accent);
+}
+
+.jungle-room .badge-ok {
+  border-color: var(--ok);
+  background: rgba(143, 212, 90, 0.18);
+  color: var(--ok);
+}
+
+.jungle-room .divider {
+  border-color: var(--border);
+}
+
+/* ------------------------------------------------------------------ roster */
+
+.jungle-room .roster .member {
+  border-radius: 12px;
+  animation: roster-in 480ms cubic-bezier(0.22, 1.1, 0.36, 1) both;
+}
+
+.jungle-room .roster .member:nth-child(2) {
+  animation-delay: 60ms;
+}
+.jungle-room .roster .member:nth-child(3) {
+  animation-delay: 110ms;
+}
+.jungle-room .roster .member:nth-child(4) {
+  animation-delay: 160ms;
+}
+.jungle-room .roster .member:nth-child(5) {
+  animation-delay: 210ms;
+}
+.jungle-room .roster .member:nth-child(6) {
+  animation-delay: 260ms;
+}
+.jungle-room .roster .member:nth-child(n + 7) {
+  animation-delay: 300ms;
+}
+
+.jungle-room .member.is-you {
+  background: rgba(168, 224, 99, 0.12);
+  border-color: rgba(168, 224, 99, 0.4);
+}
+
+.jungle-room .ant-avatar svg {
+  border-radius: 50%;
+}
+
+/* ------------------------------------------------------------------ lobby */
+
+.jungle-room .lobby-plate {
+  background:
+    radial-gradient(120% 140% at 8% 0%, rgba(124, 194, 66, 0.22), transparent 58%),
+    linear-gradient(180deg, rgba(30, 91, 25, 0.92), rgba(14, 48, 12, 0.96));
+}
+
+.jungle-room .lobby-plate .eyebrow {
+  color: var(--muted);
+}
+
+.jungle-room .lobby-plate .room-code,
+.jungle-room .lobby-plate .lobby-code {
+  font-size: clamp(44px, 5.4vw, 72px);
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.jungle-room .lobby-code-hint {
+  color: var(--muted);
+}
+
+.jungle-room .lobby-cta {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(8, 32, 7, 0.4);
+}
+
+.jungle-room .lobby-start {
+  border-radius: 999px;
+}
+
+.jungle-room .lobby-panel h2 {
+  font-size: 21px;
+}
+
+.jungle-room .lobby-panel .hint {
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------ round screens */
+
+.jungle-room .answer-input {
+  border-radius: 999px;
+  background: rgba(6, 26, 5, 0.6);
+  border: 1px solid var(--border-strong);
+}
+
+.jungle-room .answer-send {
+  border-radius: 999px;
+}
+
+.jungle-room .answer-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(7, 28, 6, 0.5);
+}
+
+.jungle-room .answer-card.is-accepted {
+  border-color: rgba(168, 224, 99, 0.5);
+  background: rgba(30, 91, 25, 0.5);
+}
+
+.jungle-room .answer-card.is-rejected {
+  border-color: rgba(255, 155, 122, 0.45);
+}
+
+.jungle-room .harvest-strip {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(8, 32, 7, 0.4);
+}
+
+.jungle-room .countdown {
+  color: var(--accent);
+  text-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+}
+
+.jungle-room .timer,
+.jungle-room .timer-value {
+  font-family: var(--mono);
+  color: var(--accent);
+}
+
+.jungle-room .feedback {
+  border-radius: 14px;
+}
+
+.jungle-room .toast {
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgba(9, 34, 7, 0.96);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+}
+
+.jungle-room .mode-card {
+  border-radius: 14px;
+  background: rgba(8, 32, 7, 0.45);
+}
+
+.jungle-room .mode-card.is-selected {
+  border-color: var(--accent);
+  background: rgba(30, 91, 25, 0.7);
+}
+
+.jungle-room .site-footer,
+.jungle-room .site-foot {
+  border-top-color: var(--border);
+  color: var(--muted);
+}
+
+@keyframes roster-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jungle-room .roster .member {
+    animation: none;
+  }
+}

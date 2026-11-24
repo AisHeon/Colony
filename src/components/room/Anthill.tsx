@@ -128,10 +128,13 @@ export function Anthill({
           });
         }
       } else {
+        // An answer the ledger doesn't know stays quiet: the card shows the miss,
+        // but no "we don't recognize that" note is posted.
+        const quiet = ack.code === "UNKNOWN_OR_UNVERIFIED";
         setLocal((previous) =>
           previous.map((answer) =>
             answer.key === key
-              ? { ...answer, status: "rejected", message: ack.message }
+              ? { ...answer, status: "rejected", message: quiet ? "" : ack.message }
               : answer,
           ),
         );
@@ -238,7 +241,7 @@ export function Anthill({
                     </span>
                     <span className="answer-card-main">
                       <strong>{answer.text}</strong>
-                      <span className="answer-speech">{answer.message}</span>
+                      {answer.message ? <span className="answer-speech">{answer.message}</span> : null}
                     </span>
                     <span className="answer-card-points">0</span>
                   </>

@@ -1,16 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import "./jungle.css";
-import { Playfair_Display } from "next/font/google";
 import { HomeEntry } from "@/components/HomeEntry";
+import { JungleVine } from "@/components/JungleCast";
 import { GAME_TAGLINE } from "@/lib/config";
-
-const display = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-jungle",
-  display: "swap",
-});
 
 // 24 × 14 crop of the hero art, inlined so the first paint is the jungle rather
 // than a flat green block while the 73 kB hero downloads.
@@ -19,18 +12,43 @@ const HERO_BLUR =
 
 export default function HomePage() {
   return (
-    <div className={`${display.variable} jungle-home`}>
+    <div className="jungle-home">
+      <JungleVine />
       <section className="jungle-hero" aria-label="Colony">
-        <Image
-          src="/art/jungle/hero.webp"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          placeholder="blur"
-          blurDataURL={HERO_BLUR}
-          className="jungle-hero-art"
-        />
+        <div className="jungle-hero-stage">
+          <div className="jungle-hero-frame">
+            <Image
+              src="/art/jungle/hero.webp"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              placeholder="blur"
+              blurDataURL={HERO_BLUR}
+              className="jungle-hero-art"
+            />
+            <span className="jungle-hero-bug is-ant">
+              <Image
+                src="/art/jungle/hero-ant.webp"
+                alt=""
+                width={600}
+                height={507}
+                priority
+                className="jungle-hero-ant"
+              />
+            </span>
+            <span className="jungle-hero-bug is-cricket">
+              <Image
+                src="/art/jungle/hero-cricket.webp"
+                alt=""
+                width={638}
+                height={544}
+                priority
+                className="jungle-hero-cricket"
+              />
+            </span>
+          </div>
+        </div>
         <h1 className="jungle-title">Colony</h1>
         <a className="jungle-scroll" href="#lobby">
           <span>scroll down for parties and options</span>

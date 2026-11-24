@@ -203,7 +203,11 @@ export function useRoom(code: string, initial: Snapshot | null = null) {
         }
         if (body?.snapshot) apply(body.snapshot as Snapshot);
         const ack = body?.result as IntentAck | undefined;
-        if (ack?.message) setToast({ message: ack.message, tone: ack.tone });
+        // Unrecognised answers are deliberately not announced: the card in the
+        // feed is enough, and the room shouldn't lecture about a miss.
+        if (ack?.message && ack.code !== "UNKNOWN_OR_UNVERIFIED") {
+          setToast({ message: ack.message, tone: ack.tone });
+        }
         return ack ?? null;
       } catch {
         setConnected(false);
