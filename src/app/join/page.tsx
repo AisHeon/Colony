@@ -1,23 +1,28 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Wordmark } from "@/components/Creatures";
+import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { JoinForm } from "@/components/JoinForm";
+
+export const metadata: Metadata = { title: "Join a room" };
 
 export default function JoinPage() {
   return (
-    <div className="shell" style={{ maxWidth: 520 }}>
-      <header className="site-head">
-        <Link href="/" aria-label="Colony home">
-          <Wordmark />
-        </Link>
-        <Link className="btn btn-ghost" href="/">
-          Back
-        </Link>
-      </header>
-      <main className="stack">
-        <h1>Join a room</h1>
-        <p className="muted">Ask the host for the six-character code or invite link.</p>
+    <div className="shell site-shell">
+      <SiteHeader />
+      <main className="setup-page setup-page-narrow stack">
+        <header className="setup-hero">
+          <p className="eyebrow">A code, a nickname, a seat</p>
+          <h1>Got a code?</h1>
+          <p className="lede">
+            Ask the host for the six-character room code or the invite link. No account needed.
+          </p>
+        </header>
         <JoinForm />
+        <p className="hint">
+          Your nickname is visible to the room. <Link href="/privacy">Privacy note</Link>.
+        </p>
       </main>
+      <SiteFooter />
     </div>
   );
 }

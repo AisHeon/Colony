@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { readNickname, rememberNickname } from "./HomeEntry";
@@ -84,6 +85,9 @@ export function JoinForm({ initialCode = "" }: { initialCode?: string }) {
           placeholder="e.g. Pip"
           autoComplete="nickname"
         />
+        <span className="hint">
+          Shown in your room. <Link href="/privacy">Privacy note</Link>.
+        </span>
       </label>
 
       {error ? (

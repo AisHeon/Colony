@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { avatarColor, type ModeId } from "@/lib/config";
+import { avatarColor, avatarInk, type ModeId } from "@/lib/config";
 import { formatScore } from "@/lib/scoring";
 import { ModeMark } from "./Creatures";
 
@@ -18,7 +18,11 @@ export function Avatar({
   const first = [...segmenter.segment(name.trim() || "?")][0]?.segment ?? "?";
   const className = size === "lg" ? "avatar avatar-lg" : size === "sm" ? "avatar avatar-sm" : "avatar";
   return (
-    <span className={className} style={{ background: avatarColor(index) }} aria-hidden="true">
+    <span
+      className={className}
+      style={{ background: avatarColor(index), color: avatarInk(index) }}
+      aria-hidden="true"
+    >
       {first.toUpperCase()}
     </span>
   );

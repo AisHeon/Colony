@@ -575,7 +575,7 @@ textarea {
   top: 0;
   z-index: 20;
   background: color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter: blur(8px);
+  backdrop-filter: none;
   border-bottom: 1px solid var(--border);
 }
 .game-bar-inner {
@@ -879,7 +879,7 @@ textarea {
   aspect-ratio: 1;
   margin: 0 auto;
   border-radius: 50%;
-  background: radial-gradient(circle, #fbf6e9 0%, #fbf6e9 45%, transparent 46%);
+  background: transparent;
 }
 .hive-center {
   position: absolute;
@@ -1462,8 +1462,8 @@ p {
 
 .scribble {
   font-style: italic;
-  background: linear-gradient(transparent 63%, #f0c64b 63%, #f0c64b 93%, transparent 93%);
-  padding: 0 0.04em;
+  text-decoration: underline 4px #f0c64b;
+  text-underline-offset: 4px;
 }
 
 .lede {

@@ -212,18 +212,22 @@ export const PREDICATE_LABELS: Record<Predicate, { forward: string; inverse: str
 };
 
 export const AVATAR_COLORS = [
-  "#2F6B4F",
-  "#8A5A2B",
-  "#5C4A8A",
-  "#2C6E7F",
-  "#8A4A5A",
-  "#4C6B2F",
-  "#7A5C1F",
-  "#44587A",
+  "#FFDD00",
+  "#FF69B4",
+  "#00BFFF",
+  "#22C55E",
+  "#FF3333",
+  "#46178F",
+  "#FFF6E5",
+  "#FFB3A7",
 ] as const;
 
 export function avatarColor(index: number): string {
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
+}
+
+export function avatarInk(index: number): string {
+  return [0, 1, 2, 3, 4, 5, 6, 7][index % 8] === 5 ? "#FFF6E5" : "#111111";
 }
 
 export type RoomSettings = {

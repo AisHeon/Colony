@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { DEFAULT_SETTINGS, MODES, type RoomSettings } from "@/lib/config";
-import { Wordmark } from "@/components/Creatures";
+import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { RoomSettingsForm } from "@/components/RoomSettingsForm";
 import { readNickname, rememberNickname } from "@/components/HomeEntry";
 
@@ -23,14 +23,6 @@ export default function CreateRoomPage() {
     const name = nickname.trim();
     if (!name) {
       setError("Choose a nickname first.");
-      return;
-    }
-    if (settings.rounds < 1 || settings.rounds > 20) {
-      setError("Rounds must be between 1 and 20.");
-      return;
-    }
-    if (settings.maxPlayers < 2 || settings.maxPlayers > 20) {
-      setError("Player limit must be between 2 and 20.");
       return;
     }
     setBusy(true);
@@ -55,26 +47,18 @@ export default function CreateRoomPage() {
   }
 
   return (
-    <div className="shell" style={{ maxWidth: 720 }}>
-      <header className="site-head">
-        <Link href="/" aria-label="Colony home">
-          <Wordmark />
-        </Link>
-        <Link className="btn btn-ghost" href="/">
-          Back
-        </Link>
-      </header>
-
-      <main className="stack">
-        <div className="stack-sm">
-          <h1>Create a room</h1>
-          <p className="muted">
-            Pick a mode and settings. Everyone joins with the code, and settings freeze when you
-            start.
+    <div className="shell site-shell">
+      <SiteHeader />
+      <main className="setup-page stack">
+        <header className="setup-hero">
+          <p className="eyebrow">Host the table</p>
+          <h1>Pick the game.<br />Set the pace.</h1>
+          <p className="lede">
+            You can change everything before the first round. Settings freeze when you press start.
           </p>
-        </div>
+        </header>
 
-        <div className="card stack">
+        <div className="card setup-card stack">
           <label className="field">
             <span className="label">Your nickname</span>
             <input
@@ -85,14 +69,16 @@ export default function CreateRoomPage() {
               placeholder="e.g. Pip"
               autoComplete="nickname"
             />
-            <span className="hint">2–16 characters. Unique in the room.</span>
+            <span className="hint">
+              2–16 characters. Unique in the room. <Link href="/privacy">Privacy note</Link>.
+            </span>
           </label>
 
           <hr className="divider" />
 
           <RoomSettingsForm
             initial={{ ...DEFAULT_SETTINGS, rounds: MODES.party.defaultRounds }}
-            submitLabel="Create room"
+            submitLabel="Open the room"
             busy={busy}
             onSubmit={create}
           />
@@ -102,7 +88,12 @@ export default function CreateRoomPage() {
             </p>
           ) : null}
         </div>
+        <p className="hint">
+          By creating a room you agree to the <Link href="/terms">terms</Link> and{" "}
+          <Link href="/privacy">privacy note</Link>.
+        </p>
       </main>
+      <SiteFooter />
     </div>
   );
 }

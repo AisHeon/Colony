@@ -56,17 +56,17 @@ export function Lobby({
   const mode = MODES[snapshot.room.settings.mode];
 
   return (
-    <div className="game-grid">
+    <div className="game-grid lobby-screen">
       <div className="stack">
-        <section className="card stack">
+        <section className="card lobby-plate stack">
           <div className="spread" style={{ alignItems: "flex-start" }}>
             <div className="stack-sm">
-              <p className="eyebrow">Room code</p>
-              <div className="room-code" style={{ fontSize: 30 }}>
+              <p className="eyebrow">Room code · share this</p>
+              <div className="room-code lobby-code">
                 {snapshot.room.code}
               </div>
             </div>
-            <div className="row-tight" style={{ justifyContent: "flex-end" }}>
+            <div className="row-tight lobby-actions">
               <CopyButton value={snapshot.room.code} label="Copy code" copiedLabel="Code copied" />
               <CopyButton value={invite} label="Copy invite link" copiedLabel="Link copied" />
               <button type="button" className="btn btn-sm" onClick={share}>
@@ -74,7 +74,7 @@ export function Lobby({
               </button>
             </div>
           </div>
-          <p className="hint">
+          <p className="hint" style={{ color: "var(--ink)" }}>
             Anyone with this code can join while the room is open. If the code won&apos;t copy,
             select it and copy manually.
           </p>
@@ -85,7 +85,7 @@ export function Lobby({
           ) : null}
         </section>
 
-        <section className="card stack">
+        <section className="card lobby-panel stack">
           <div className="spread">
             <h2>Players</h2>
             <span className="badge">
@@ -147,7 +147,7 @@ export function Lobby({
       </div>
 
       <aside className="stack">
-        <section className="card stack">
+        <section className="card lobby-panel stack">
           <div className="row-tight">
             <h2>{mode.name}</h2>
             <span className="badge">{mode.timerLabel}</span>
@@ -192,7 +192,7 @@ export function Lobby({
             <div className="stack-sm">
               <button
                 type="button"
-                className="btn btn-primary btn-lg"
+                className="btn btn-primary btn-lg lobby-start"
                 disabled={!canStart || pending}
                 onClick={() => send({ type: "match:start" })}
                 title={startReason ?? "Start the match"}

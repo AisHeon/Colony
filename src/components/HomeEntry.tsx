@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MODE_ORDER, MODES, type ModeId } from "@/lib/config";
-import { ModeIcon } from "./ui";
+import { MODES } from "@/lib/config";
 
 const NICK_KEY = "colony:nickname";
 
@@ -29,7 +29,6 @@ export function HomeEntry() {
   const [tab, setTab] = useState<"create" | "join">("create");
   const [nickname, setNickname] = useState("");
   const [code, setCode] = useState("");
-  const [mode, setMode] = useState<ModeId>("party");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +52,7 @@ export function HomeEntry() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           nickname: name,
-          settings: { mode, rounds: MODES[mode].defaultRounds },
+          settings: { mode: "party", rounds: MODES.party.defaultRounds },
         }),
       });
       const body = await res.json().catch(() => null);
@@ -106,9 +105,13 @@ export function HomeEntry() {
   return (
     <div className="card entry-card">
       <div className="entry-head">
-        <span className="ticket-kicker">Create or join</span>
+        <div>
+          <span className="ticket-kicker">Start here</span>
+          <h2>Claim a seat.</h2>
+        </div>
         <span className="ticket-mark">no account</span>
       </div>
+
       <div className="entry-tabs" role="tablist" aria-label="Create or join">
         <button
           type="button"
@@ -117,7 +120,7 @@ export function HomeEntry() {
           className="entry-tab"
           onClick={() => setTab("create")}
         >
-          Create room
+          Create
         </button>
         <button
           type="button"
@@ -126,7 +129,7 @@ export function HomeEntry() {
           className="entry-tab"
           onClick={() => setTab("join")}
         >
-          Join room
+          Join with code
         </button>
       </div>
 
@@ -142,34 +145,30 @@ export function HomeEntry() {
           autoCapitalize="words"
           spellCheck={false}
         />
+        <span className="hint">
+          Shown in your room. 2–16 characters.{" "}
+          <Link href="/privacy">Privacy note</Link>.
+        </span>
       </label>
 
       {tab === "create" ? (
         <form className="stack-sm" onSubmit={createRoom}>
-          <span className="label">Starting mode</span>
-          <div className="row-tight" style={{ flexWrap: "wrap", gap: 6 }}>
-            {MODE_ORDER.map((id) => (
-              <button
-                key={id}
-                type="button"
-                className={`btn btn-sm ${mode === id ? "btn-secondary" : ""}`}
-                aria-pressed={mode === id}
-                onClick={() => setMode(id)}
-              >
-                <ModeIcon mode={id} size={16} />
-                {MODES[id].name}
-              </button>
-            ))}
+          <div className="entry-callout">
+            <strong>Party room.</strong> Eight slots, all four games, one favourite-mode vote at the
+            end. You can change the mode and rounds in the lobby.
           </div>
-          <p className="hint">You can change rounds, player limit and content in the lobby.</p>
           {error ? (
             <p className="error-text" role="alert">
               {error}
             </p>
           ) : null}
           <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={busy}>
-            {busy ? "Creating…" : "Create room"}
+            {busy ? "Opening the room…" : "Create a room"}
           </button>
+          <p className="hint">
+            Want a specific game or fewer rounds?{" "}
+            <Link href="/create">Set it up first</Link>.
+          </p>
         </form>
       ) : (
         <form className="stack-sm" onSubmit={joinRoom}>
@@ -186,15 +185,15 @@ export function HomeEntry() {
               spellCheck={false}
               inputMode="text"
             />
+            <span className="hint">Paste an invite link too — we only read the code.</span>
           </label>
-          <p className="hint">Paste an invite link too — we only read the code.</p>
           {error ? (
             <p className="error-text" role="alert">
               {error}
             </p>
           ) : null}
           <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={busy}>
-            {busy ? "Joining…" : "Join room"}
+            {busy ? "Joining…" : "Join the room"}
           </button>
         </form>
       )}

@@ -1,44 +1,45 @@
 import Link from "next/link";
-import { GAME_TAGLINE } from "@/lib/config";
-import { MODE_ORDER, MODES } from "@/lib/config";
-import { Wordmark, ModeMark } from "@/components/Creatures";
+import { GAME_TAGLINE, MODE_ORDER, MODES } from "@/lib/config";
+import { ModeMark, Wordmark } from "@/components/Creatures";
 import { HomeEntry } from "@/components/HomeEntry";
+import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
 export default function HomePage() {
   return (
-    <div className="shell">
-      <header className="site-head">
-        <Wordmark />
-        <nav className="row-tight" aria-label="Main">
-          <Link className="btn btn-ghost" href="/how-to-play">
-            How to play
-          </Link>
-          <Link className="btn btn-secondary btn-sm" href="/create">
-            Create room
-          </Link>
-        </nav>
-      </header>
-
+    <div className="shell site-shell">
+      <SiteHeader />
       <main>
         <section className="hero">
-          <div className="stack hero-copy">
-            <p className="eyebrow">A five-game party in one room</p>
-            <h1>
-              Quick answers. <span className="scribble">Clever connections.</span>{" "}
+          <div className="hero-copy stack">
+            <p className="eyebrow">2–20 players · one browser window</p>
+            <h1 className="hero-title">
+              <span className="riso">Name things.</span>
               <br />
-              One room.
+              <span>Connect things.</span>
+              <br />
+              <span className="highlight">Win the room.</span>
             </h1>
             <p className="lede">
-              Five fast games for a loud table. Share a six-character code and everyone plays on
+              Four fast games for a loud table. Share a six-character code and everyone plays on
               their own phone. No accounts, no downloads, no explaining what an app store is.
             </p>
-            <div className="hero-stamps row small">
-              <span className="stamp">2–20 players</span>
-              <span className="stamp">one shared code</span>
-              <span className="stamp">phones, not consoles</span>
+            <div className="hero-tags">
+              <span className="sticker">2–20 players</span>
+              <span className="sticker sticker-alt">one shared code</span>
+              <span className="sticker">phones, not consoles</span>
             </div>
+            <p className="hero-note">
+              <span className="note-arrow" aria-hidden="true">↳</span> {GAME_TAGLINE}
+            </p>
           </div>
+
+          <div className="hero-side">
+            <HomeEntry />
+          </div>
+
           <figure className="hero-poster">
+            <span className="poster-tape poster-tape-one" aria-hidden="true" />
+            <span className="poster-tape poster-tape-two" aria-hidden="true" />
             <img
               src="/art/colony-key-art.jpg"
               alt="Four insect friends playing cards around a small green table"
@@ -47,88 +48,95 @@ export default function HomePage() {
             />
             <figcaption>Four friends. One table. Zero downloads.</figcaption>
           </figure>
-          <div className="hero-side">
-            <HomeEntry />
-          </div>
         </section>
 
-        <section className="stack" style={{ marginTop: 48 }}>
-          <div className="spread section-head">
-            <h2>Five ways to run the table.</h2>
-            <p className="small muted">Pick a lane, or let Party deal the whole hand.</p>
+        <section className="mode-section stack">
+          <div className="section-head">
+            <div>
+              <p className="eyebrow">The line-up</p>
+              <h2>One room. Five ways to get loud.</h2>
+            </div>
+            <p className="section-note">
+              Pick a lane, or let Party deal the whole hand. Every mode is playable in the same room.
+            </p>
           </div>
-          <div className="mode-grid">
-            {MODE_ORDER.map((id, index) => {
+          <div className="mode-rail" aria-label="Game modes">
+            {MODE_ORDER.map((id) => {
               const mode = MODES[id];
               return (
-                <article
-                  key={id}
-                  className="mode-card"
-                  style={{ ["--mode-accent" as string]: `var(--accent-${id})` }}
-                >
-                  <span className="mode-num">{String(index + 1).padStart(2, "0")}</span>
-                  <span className="mode-icon">
-                    <ModeMark mode={id} size={22} />
+                <article key={id} className={`mode-ticket mode-${id}`}>
+                  <span className="mode-shape" aria-hidden="true" />
+                  <span className="mode-ticket-icon">
+                    <ModeMark mode={id} size={24} />
                   </span>
-                  <h3>{mode.name}</h3>
-                  <p>{mode.blurb}</p>
-                  <p className="tiny muted" style={{ marginTop: "auto" }}>
-                    {mode.timerLabel}
-                  </p>
+                  <div>
+                    <h3>{mode.name}</h3>
+                    <p>{mode.tagline}</p>
+                  </div>
+                  <span className="mode-time">{mode.timerLabel}</span>
                 </article>
               );
             })}
           </div>
         </section>
 
-        <section className="stack" style={{ marginTop: 52 }}>
-          <h2>How it goes.</h2>
-          <div className="steps">
-            <div className="card card-tight stack-sm">
-              <span className="step-num">01</span>
-              <h3>Share a code</h3>
-              <p className="small muted">
-                The host creates a private room. Everyone else joins with the code or invite link.
-              </p>
+        <section className="how-strip stack">
+          <div className="section-head">
+            <div>
+              <p className="eyebrow">How a room runs</p>
+              <h2>It takes one code.</h2>
             </div>
-            <div className="card card-tight stack-sm">
-              <span className="step-num">02</span>
-              <h3>Ready up</h3>
-              <p className="small muted">
-                Two players is enough. Settings freeze when the host starts, so everyone plays the
-                same game.
+            <p className="section-note">
+              The rules are short. The arguing about the answers is the entertainment.
+            </p>
+          </div>
+          <div className="comic-strip">
+            <article className="strip-panel panel-one">
+              <span className="panel-kicker">Host</span>
+              <h3>Open a room.</h3>
+              <p>
+                Pick a mode, rounds and a player limit. Share the code with the group chat. Settings
+                freeze when the first round begins.
               </p>
-            </div>
-            <div className="card card-tight stack-sm">
-              <span className="step-num">03</span>
-              <h3>Score match points</h3>
-              <p className="small muted">
-                Each round ranks players and awards placement points. Ties share a placement and the
-                points that go with it.
+            </article>
+            <article className="strip-panel panel-two">
+              <span className="panel-kicker">Everyone</span>
+              <h3>Take a seat.</h3>
+              <p>
+                Choose a nickname, ready up and play on your own screen. The server keeps the clock,
+                the answers and the score in sync.
               </p>
-            </div>
+            </article>
+            <article className="strip-panel panel-three">
+              <span className="panel-kicker">The room</span>
+              <h3>Get loud.</h3>
+              <p>
+                Rarer answers, shorter webs and shared favourites decide the night. Most match points
+                takes the crown.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section className="home-cta">
+          <div>
+            <p className="eyebrow">No account. No install.</p>
+            <h2>Your table is one code away.</h2>
+          </div>
+          <div className="row">
+            <Link className="btn btn-primary btn-lg" href="/create">
+              Create a room
+            </Link>
+            <Link className="btn btn-lg" href="/join">
+              Join with a code
+            </Link>
+            <Link className="text-link" href="/how-to-play">
+              Read the full rules
+            </Link>
           </div>
         </section>
       </main>
-
-      <footer className="footer">
-        <div className="spread" style={{ alignItems: "flex-start" }}>
-          <div className="stack-sm">
-            <p className="strong" style={{ color: "var(--ink)" }}>
-              {GAME_TAGLINE}
-            </p>
-            <p>
-              Colony is an original party game. Creature marks and interface are original artwork.
-              Facts in Spider Web come from the cited sources in the game dataset.
-            </p>
-          </div>
-          <div className="footer-links">
-            <Link href="/how-to-play">How to play</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/create">Create room</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

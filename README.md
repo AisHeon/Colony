@@ -84,7 +84,11 @@ scripts/                 migrate, seed, verify, import, engine smoke
 
 ## Design
 
-The visual language is a printed game zine: warm paper stock with a fine dot grid, black ink rules, hard offset shadows, a serif display face, mono labels, six flat creature marks drawn as inline SVG, and one accent per mode. The hero uses an original insect-table illustration exported from Canva and served locally from `public/art/`. There are no external fonts, remote images or trackers. Motion respects `prefers-reduced-motion`, every control is keyboard reachable, and all interactive targets are at least 44 px.
+Colony uses a loud pop-art game-night system: warm paper stock (`#FFF6E5`), heavy black ink rules, hard offset shadows without blur, riso-style misregistered type, flat colour blocks and Ben-Day dots. Bricolage Grotesque carries display type, Space Grotesk carries body copy, and JetBrains Mono carries codes, scores and labels. Party is pink, Anthill red, Beehive yellow, Spider Web green and Hopper blue; shapes, stickers and comic bubbles carry the mode identity instead of generic icons.
+
+The hero uses an original insect-table illustration exported from Canva and served locally from `public/art/` (source in `design/`). All three fonts are self-hosted from `public/fonts/` under the SIL Open Font License, so there are no remote font requests, remote images or trackers. Motion respects `prefers-reduced-motion`, focus styles stay visible, and interactive targets are at least 44 px.
+
+Legal and safety routes are part of the shell: `/privacy`, `/terms`, `/cookies`, `/refunds`, `/contact`, `/credits` and `/delete-data`. The neutral 13+ gate stores only a local preference, and the deletion route clears the guest session and active membership; shared match history is retained for the other players unless a manual request is made. The legal copy is explicitly marked as a draft that needs review by a qualified lawyer before commercial use.
 
 ## Content
 

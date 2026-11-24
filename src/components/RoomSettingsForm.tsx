@@ -46,7 +46,6 @@ export function RoomSettingsForm({
               }}
               style={{
                 ["--mode-accent" as string]: `var(--accent-${id})`,
-                borderColor: settings.mode === id ? `var(--accent-${id})` : undefined,
                 textAlign: "left",
                 cursor: "pointer",
                 font: "inherit",

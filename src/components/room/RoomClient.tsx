@@ -7,6 +7,7 @@ import { MODES } from "@/lib/config";
 import type { Snapshot } from "@/lib/game/types";
 import { Wordmark } from "@/components/Creatures";
 import { CopyButton } from "@/components/ui";
+import { SiteFooter } from "@/components/SiteChrome";
 import { useRoom } from "@/components/useRoom";
 import { readNickname, rememberNickname } from "@/components/HomeEntry";
 import { Lobby } from "./Lobby";
@@ -148,6 +149,7 @@ export function RoomClient({ code }: { code: string }) {
             <p className="muted">Fetching the latest room state.</p>
           </div>
         </main>
+        <SiteFooter />
       </div>
     );
   }
@@ -172,6 +174,7 @@ export function RoomClient({ code }: { code: string }) {
             </Link>
           </div>
         </main>
+        <SiteFooter />
       </div>
     );
   }
@@ -214,6 +217,7 @@ export function RoomClient({ code }: { code: string }) {
             {joining ? "Joining…" : "Join room"}
           </button>
         </main>
+        <SiteFooter />
       </div>
     );
   }
@@ -224,11 +228,11 @@ export function RoomClient({ code }: { code: string }) {
   const matchFinished = match?.status === "ended";
 
   return (
-    <div className="game">
+    <div className={`game${inLobby ? " is-lobby" : ""}`}>
       <header className="game-bar">
         <div className="shell game-bar-inner">
           <Link href="/" className="wordmark" aria-label="Colony home">
-            <span style={{ fontSize: 16 }}>Colony</span>
+            <span>Colony</span>
           </Link>
           <span className="room-code" title="Room code">
             {snapshot.room.code}
@@ -309,6 +313,9 @@ export function RoomClient({ code }: { code: string }) {
           {toast.message}
         </div>
       ) : null}
+      <div className="shell">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

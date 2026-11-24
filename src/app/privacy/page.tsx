@@ -1,95 +1,123 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { Wordmark } from "@/components/Creatures";
+import Link from "next/link";
+import { CONTACT_EMAIL, LegalPage } from "@/components/SiteChrome";
 
-export const metadata: Metadata = { title: "Privacy & data" };
+export const metadata: Metadata = { title: "Privacy" };
 
 export default function PrivacyPage() {
   return (
-    <div className="shell" style={{ maxWidth: 720 }}>
-      <header className="site-head">
-        <Link href="/" aria-label="Colony home">
-          <Wordmark />
-        </Link>
-        <Link className="btn btn-ghost" href="/">
-          Back
-        </Link>
-      </header>
-      <main className="stack-lg">
-        <div className="stack-sm">
-          <h1>Privacy & data</h1>
-          <p className="muted">
-            Colony is built to be playable without an account or an email address. Here is exactly
-            what the game keeps.
-          </p>
-        </div>
+    <LegalPage title="Privacy" updated="24 November 2026">
+      <section className="stack-sm">
+        <h2>The short version</h2>
+        <p>
+          Colony is designed to be playable without an account or an email address. The game needs a
+          nickname, a room code, your game answers and a guest session so it can keep your seat and
+          score. We do not run advertising or third-party analytics.
+        </p>
+      </section>
 
-        <section className="card stack">
-          <h2>What we store</h2>
-          <ul className="rule-list">
-            <li>
-              A random guest session token in an HttpOnly cookie. The database stores only a SHA-256
-              hash of it, never the token itself.
-            </li>
-            <li>
-              Your nickname, avatar color and room membership. Nicknames are shown to people in your
-              room.
-            </li>
-            <li>
-              Gameplay records needed to score a match: accepted answers, saved paths, saved
-              rankings and match points.
-            </li>
-            <li>
-              Aggregated, non-identifying counts of how often an answer is chosen, used only to
-              improve rarity estimates.
-            </li>
-            <li>
-              Reports you deliberately submit about a missing answer or connection, plus the content
-              version they refer to.
-            </li>
-          </ul>
-        </section>
+      <section className="stack-sm">
+        <h2>What we collect</h2>
+        <ul className="rule-list">
+          <li>
+            <strong>Guest session.</strong> A random token in an HttpOnly cookie named{" "}
+            <code>colony_guest</code>. The database stores only a SHA-256 hash, never the token
+            itself. It lasts for up to one year so reconnect works.
+          </li>
+          <li>
+            <strong>Game profile.</strong> Your nickname, avatar colour and room membership. Your
+            nickname is shown to people in your room.
+          </li>
+          <li>
+            <strong>Gameplay records.</strong> Accepted answers, Spider Web paths, Hopper selections,
+            placements, scores and votes needed to run and settle a match.
+          </li>
+          <li>
+            <strong>Local preferences.</strong> Your last nickname, sound preference and age-gate
+            choice are kept in this browser&apos;s local storage. They never leave the browser through
+            Colony.
+          </li>
+          <li>
+            <strong>Reports you send.</strong> If you report a missing answer or connection, we keep the
+            report text, the content version and the room code for review.
+          </li>
+        </ul>
+      </section>
 
-        <section className="card stack">
-          <h2>What we do not do</h2>
-          <ul className="rule-list">
-            <li>No advertising trackers, fingerprinting or third-party analytics.</li>
-            <li>No public chat, voice chat or direct messages.</li>
-            <li>No sale of gameplay data.</li>
-            <li>No email address required to play.</li>
-          </ul>
-        </section>
+      <section className="stack-sm">
+        <h2>Why we use it</h2>
+        <p>
+          To create and join rooms, keep seats through reconnects, run the timer and scoring rules,
+          show results, prevent duplicate submissions, investigate reported content, and keep the
+          service reliable. We do not use gameplay data to build advertising profiles.
+        </p>
+      </section>
 
-        <section className="card stack">
-          <h2>Retention</h2>
-          <p className="muted">
-            Rooms close after inactivity and their live state is not kept as an archive. Raw answer
-            attempts are retained for the life of a room so reconnects and results are consistent. A
-            small deduplication table for request IDs is pruned daily. Reports remain in the review
-            queue until handled.
-          </p>
-        </section>
+      <section className="stack-sm">
+        <h2>Who receives it</h2>
+        <p>
+          Data is processed by the hosting and storage providers that run Colony. The current
+          deployment uses Vercel for hosting and Vercel Blob for the shared room state. Those providers
+          process data on our behalf; they are not permitted to use it for their own advertising.
+          There are no analytics, advertising, fingerprinting or marketing SDKs in the app.
+        </p>
+        <p>
+          We may disclose information if required by law or to protect the safety and rights of
+          players. We do not sell gameplay data.
+        </p>
+      </section>
 
-        <section className="card stack">
-          <h2>Cambridge Analytica-free zone</h2>
-          <p className="muted">
-            Guest data is pseudonymous, not anonymous: a session can be linked to that browser&apos;s
-            play history while the session exists. If you want a clean slate, clear the site cookies
-            and you will be issued a new guest session.
-          </p>
-        </section>
+      <section className="stack-sm" id="children">
+        <h2>Children and age</h2>
+        <p>
+          Colony is currently limited to players aged 13 or older. The age gate is neutral and does not
+          ask for a date of birth. We do not knowingly collect personal information from children under
+          13. If you believe a child under 13 has provided information, contact{" "}
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we will remove it. A
+          parental-consent flow for younger players is not available yet.
+        </p>
+      </section>
 
-        <section className="card stack">
-          <h2>Content acknowledgments</h2>
-          <p className="muted">
-            Spider Web relationships cite Wikipedia pages in the dataset, accessed 2026-11-12.
-            Hopper rankings are editorial estimates written for this game and labeled as such.
-            Pokémon, Minecraft, Disney, Harry Potter and Star Wars names are referenced factually as
-            answer content; Colony is not affiliated with, endorsed by or sponsored by any of those
-            rights holders, and no proprietary artwork is used.
-          </p>
-        </section>
-      </main>
-    </div>
+      <section className="stack-sm">
+        <h2>Retention</h2>
+        <p>
+          Rooms close after inactivity. Live room state is not kept as a permanent archive. Raw answer
+          attempts are retained for the life of a room so reconnects and results stay consistent. A
+          small request-deduplication table is pruned daily. Content reports remain in the review queue
+          until handled. Guest sessions expire after one year.
+        </p>
+      </section>
+
+      <section className="stack-sm">
+        <h2>Your choices and rights</h2>
+        <p>
+          You can clear this browser&apos;s Colony data from the{" "}
+          <Link href="/delete-data">delete my data</Link> page. You can also email{" "}
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> to ask for access, correction or
+          deletion of the server-side records tied to your guest session. We aim to respond within 30
+          days. Because there are no accounts, we may need information from you to locate the right
+          session; we will not ask for more than necessary.
+        </p>
+      </section>
+
+      <section className="stack-sm">
+        <h2>Security</h2>
+        <p>
+          Sessions are server-issued and HttpOnly; mutations are same-origin checked. No service can
+          promise perfect security, so please do not submit sensitive personal information in a
+          nickname or answer.
+        </p>
+      </section>
+
+      <section className="stack-sm">
+        <h2>Changes and contact</h2>
+        <p>
+          If this notice changes materially, the updated date at the top will change. Questions:
+          {" "}
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Operator: Aison He, an independent
+          project.
+        </p>
+      </section>
+    </LegalPage>
   );
 }
