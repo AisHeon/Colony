@@ -68,9 +68,10 @@ export default function CookiesPage() {
       <section className="stack-sm">
         <h2>Third parties</h2>
         <p>
-          Vercel hosts the application and stores shared room state. Its infrastructure may set
-          operational cookies at the platform edge, but Colony does not add advertising or analytics
-          trackers. Check Vercel&apos;s own privacy notice for its infrastructure processing.
+          Vercel hosts the application, and a managed PostgreSQL service stores shared room state.
+          Their infrastructure may set operational cookies at the platform edge, but Colony does not
+          add advertising or analytics trackers. Check the providers&apos; own privacy notices for
+          their infrastructure processing.
         </p>
       </section>
 

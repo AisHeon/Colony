@@ -57,8 +57,9 @@ export default function PrivacyPage() {
         <h2>Who receives it</h2>
         <p>
           Data is processed by the hosting and storage providers that run Colony. The current
-          deployment uses Vercel for hosting and Vercel Blob for the shared room state. Those providers
-          process data on our behalf; they are not permitted to use it for their own advertising.
+          deployment uses Vercel for hosting and a managed PostgreSQL service for the shared room
+          state. Those providers process data on our behalf; they are not permitted to use it for
+          their own advertising.
           There are no analytics, advertising, fingerprinting or marketing SDKs in the app.
         </p>
         <p>

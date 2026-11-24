@@ -313,8 +313,8 @@ async function ensureSchema(db: Db) {
 }
 
 /**
- * Seeds the audited content once per PGlite instance. Hosted Postgres is
- * seeded explicitly with `npm run db:seed` and is never auto-populated here.
+ * Seeds the audited content once per database. The seed is idempotent, so the
+ * first cold start on a new hosted Postgres database is ready to serve rooms.
  */
 async function ensureContent(db: Db) {
   const seeded = await db.one<{ key: string }>("select key from content_meta where key = 'version'");

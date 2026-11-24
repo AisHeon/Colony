@@ -30,8 +30,8 @@ npm run dev          # http://localhost:3000
 
 The same schema and SQL run on:
 
-- **Postgres** when `DATABASE_URL` is set. This is the preferred path at scale.
-- **PGlite in memory + shared Blob state** on Vercel. Content stays in memory; rooms, players, matches and answers are stored as one JSON document in a private Vercel Blob store, guarded by ETag compare-and-swap (`ifMatch`). Every instance reads and writes the same durable state, so a room created on one serverless instance is visible to the next.
+- **Postgres** when `DATABASE_URL` is set. The live deployment uses this path; rooms, players, matches and answers are written to the managed database.
+- **PGlite in memory + shared Blob state** as a fallback when no `DATABASE_URL` is configured on Vercel. Content stays in memory; rooms, players, matches and answers are stored as one JSON document in a private Vercel Blob store, guarded by ETag compare-and-swap (`ifMatch`).
 - **PGlite on disk** locally, in `.colony-data/`. This is what local development, tests and scripts use.
 
 ```bash
